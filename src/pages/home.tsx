@@ -1,6 +1,5 @@
 import { getTestApi } from "@/api/test";
 import { useQuery } from "@tanstack/react-query";
-
 export function HomePage() {
   const { data, error, isPending } = useQuery({
     queryKey: ["test"],

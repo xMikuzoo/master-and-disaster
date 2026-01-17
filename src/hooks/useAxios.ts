@@ -11,7 +11,6 @@ interface AxiosRequestOptions<TData> {
   data?: TData;
   signal?: AbortSignal;
   defaultErrorMessage: string;
-  additionalInternalMessage?: string;
   params?: URLSearchParams;
   responseType?: ResponseType;
   successMessage?: string;
@@ -36,11 +35,7 @@ export async function useAxios<TResponse, TData = void>(
     return result;
   } catch (err) {
     const error = err as AxiosError;
-    exceptionHelper().showExceptionMessage(
-      error,
-      options.defaultErrorMessage,
-      options.additionalInternalMessage,
-    );
+    exceptionHelper().showExceptionMessage(error, options.defaultErrorMessage);
   }
   return null;
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Header } from "@/components/header.tsx";
+import { Toaster } from "@/components/ui/sonner";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <main className="container mx-auto flex-1 overflow-y-auto rounded-b-md px-4 py-8">
         {children}
       </main>
+      <Toaster />
     </div>
   );
 }

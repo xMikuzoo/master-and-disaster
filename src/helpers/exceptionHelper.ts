@@ -1,21 +1,14 @@
 import { AxiosError } from "axios";
+import { toast } from "sonner";
 
 export function exceptionHelper() {
-  function showExceptionMessage(
-    error: AxiosError,
-    message: string,
-    additionalInternalMessage?: string,
-  ) {
+  function showExceptionMessage(error: AxiosError, defaultMessage: string) {
     if (!error.response) {
       return;
     }
-
-    console.log(
-      "Unknown error format:",
-      error.response.data,
-      message,
-      additionalInternalMessage,
-    );
+    toast.error(error.status, {
+      description: error.message ?? defaultMessage,
+    });
   }
 
   return {
