@@ -9,5 +9,19 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        const colorMode =
+          localStorage.getItem("master-or-disaster-ui-theme") || "auto";
+        const isDark =
+          colorMode === "dark" ||
+          (colorMode === "auto" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </body>
 </html>
