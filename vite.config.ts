@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
 					},
 				},
 				"/ddragon-cdn": {
-					target: "https://cdn.communitydragon.org/",
+					target: "https://cdn.communitydragon.org",
 					changeOrigin: true,
 					rewrite: (path) =>
 						path.replace(

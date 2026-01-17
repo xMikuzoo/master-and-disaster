@@ -1,3 +1,4 @@
+import type { LeagueEntry, GetLeagueEntryRequest } from "./types/index"
 import { axiosRequest } from "@/hooks/useAxios"
 import type {
 	Account,
@@ -7,6 +8,7 @@ import type {
 	GetMatchListRequest,
 	MatchList,
 	Match,
+	GetMatchRequest,
 } from "./types"
 
 export const getAccountByRiotId = async (pathParams: GetAccountPathParams) => {
@@ -50,10 +52,18 @@ export const getMatchListByPUUID = async (request: GetMatchListRequest) => {
 	})
 }
 
-export const getMatchById = async (matchId: string) => {
+export const getMatchById = async (request: GetMatchRequest) => {
 	return await axiosRequest<Match>({
-		url: `api/riotgames/europe/lol/match/v5/matches/${matchId}`,
+		url: `api/riotgames/europe/lol/match/v5/matches/${request.matchId}`,
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch match data from Riot API",
+	})
+}
+
+export const getLeagueEntryByPUUID = async (request: GetLeagueEntryRequest) => {
+	return await axiosRequest<LeagueEntry[]>({
+		url: `api/riotgames/eun1/lol/league/v4/entries/by-puuid/${request.puuid}`,
+		method: "GET",
+		defaultErrorMessage: "Failed to fetch league entry data from Riot API",
 	})
 }

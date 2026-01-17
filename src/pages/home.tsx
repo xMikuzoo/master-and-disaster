@@ -1,6 +1,7 @@
 import { getProfileIcon } from "@/api/ddragon-cdn"
 import {
 	getAccountByRiotId,
+	getLeagueEntryByPUUID,
 	getMatchById,
 	getMatchListByPUUID,
 	getSummonerByPUUID,
@@ -45,10 +46,27 @@ export function HomePage() {
 		enabled: !!data?.puuid,
 	})
 
+	const {
+		data: leagueEntry,
+		error: leagueEntryError,
+		isLoading: leagueEntryIsLoading,
+	} = useQuery({
+		queryKey: ["leagueEntry", profile?.puuid],
+		queryFn: () =>
+			getLeagueEntryByPUUID({
+				puuid: data!.puuid,
+			}),
+		select: (data) => data?.data,
+		enabled: !!profile?.puuid,
+	})
+
 	const matches = useQueries({
 		queries: (matchList ?? []).map((matchId) => ({
 			queryKey: ["match", matchId],
-			queryFn: () => getMatchById(matchId),
+			queryFn: () =>
+				getMatchById({
+					matchId: matchId,
+				}),
 			enabled: !!matchList,
 		})),
 	})
@@ -87,15 +105,31 @@ export function HomePage() {
 									src={getProfileIcon(profile.profileIconId)}
 									alt="Profile Icon"
 								/>
-								<img
-									src="https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/emblem-gold.png"
-									alt="Profile Icon"
-									width={240}
-								/>
 							</p>
-							<p>
-								<strong>PUUID:</strong> {profile.puuid}
-							</p>
+							<div className="">
+								<strong>League Entry:</strong>{" "}
+								{leagueEntryIsLoading && (
+									<span>Loading League Entry...</span>
+								)}
+								{leagueEntryError && (
+									<span>
+										Error:{" "}
+										{(leagueEntryError as Error).message}
+									</span>
+								)}
+								{leagueEntry && (
+									<span>
+										{leagueEntry.length === 0
+											? "Unranked"
+											: leagueEntry
+													.map(
+														(entry) =>
+															`${entry.tier} ${entry.rank} - ${entry.leaguePoints} LP`
+													)
+													.join(", ")}
+									</span>
+								)}
+							</div>
 							<p>
 								<strong>Revision Date:</strong>{" "}
 								{new Date(
