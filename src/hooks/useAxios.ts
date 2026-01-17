@@ -21,14 +21,16 @@ export async function axiosRequest<TResponse, TData = void>(
   options: AxiosRequestOptions<TData>,
 ) {
   try {
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      "X-Riot-Token": import.meta.env.VITE_RIOT_API_KEY,
+    };
     const result = await axios<TResponse>(options.url, {
       method: options.method,
       data: options.data,
       signal: options.signal,
       params: options.params,
       responseType: options.responseType,
-      headers,
+      headers: headers,
     });
     if (options.successMessage) {
       toast.success("sukces", { description: options.successMessage });
