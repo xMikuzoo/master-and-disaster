@@ -1,7 +1,6 @@
 import { getLeagueEntryByPUUID, getSummonerByPUUID } from "@/api/riotgames"
 import { useQuery } from "@tanstack/react-query"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { getProfileIcon } from "@/api/ddragon-cdn"
 import {
 	Item,
 	ItemActions,
@@ -24,6 +23,8 @@ import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { XIcon } from "lucide-react"
+import { Matches } from "./matches"
+import { getProfileIcon } from "@/api/ddragon-cdn"
 
 type SummonerProfileProps = Account
 
@@ -83,6 +84,7 @@ export function SummonerProfile(props: SummonerProfileProps) {
 									</AvatarFallback>
 								</Avatar>
 							</ItemMedia>
+
 							<ItemContent>
 								<ItemTitle>
 									{props.gameName}#{props.tagLine}
@@ -171,6 +173,7 @@ export function SummonerProfile(props: SummonerProfileProps) {
 					</ItemGroup>
 				)
 			)}
+			<Matches accountPUUID={props.puuid} />
 		</>
 	)
 }

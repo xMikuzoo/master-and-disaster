@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
 					},
 				},
 				"/ddragon-cdn": {
-					target: "https://cdn.communitydragon.org",
+					target: "https://ddragon.leagueoflegends.com/cdn",
 					changeOrigin: true,
 					rewrite: (path) =>
 						path.replace(
