@@ -1,5 +1,6 @@
 import { exceptionHelper } from "@/helpers/exceptionHelper";
 import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -16,7 +17,7 @@ interface AxiosRequestOptions<TData> {
   successMessage?: string;
 }
 
-export async function useAxios<TResponse, TData = void>(
+export async function axiosRequest<TResponse, TData = void>(
   options: AxiosRequestOptions<TData>,
 ) {
   try {
@@ -30,7 +31,7 @@ export async function useAxios<TResponse, TData = void>(
       headers,
     });
     if (options.successMessage) {
-      console.log("Success message:", options.successMessage);
+      toast.success("sukces", { description: options.successMessage });
     }
     return result;
   } catch (err) {

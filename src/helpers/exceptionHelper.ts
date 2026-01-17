@@ -10,7 +10,6 @@ export function exceptionHelper() {
       description: error.message ?? defaultMessage,
     });
   }
-
   return {
     showExceptionMessage,
   };
