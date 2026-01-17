@@ -5,6 +5,7 @@ export function HomePage() {
   const { data, error, isPending } = useQuery({
     queryKey: ["test"],
     queryFn: getTestApi,
+    select: (data) => data?.data,
   });
 
   return (
@@ -13,13 +14,7 @@ export function HomePage() {
       <div className="">
         {isPending && <div>Loading...</div>}
         {error && <div>Error: {(error as Error).message}</div>}
-        {data && (
-          <div>
-            <pre className="whitespace-break-spaces">
-              Data: {JSON.stringify(data, null, 2)}
-            </pre>
-          </div>
-        )}
+        {!!data && <div>Data: {JSON.stringify(data)}</div>}
       </div>
     </>
   );
