@@ -1,17 +1,18 @@
-import { Example } from "@/components/example";
+import { HomePage } from "@/pages/home";
+import { NotFoundPage } from "@/pages/not-found";
 import { createBrowserRouter, Navigate } from "react-router";
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Example title="Home Page" />,
+    element: <HomePage />,
   },
   {
     path: "*",
-    element: <Navigate to="/404" replace />,
+    element: <Navigate to="/not-found" replace />,
   },
   {
-    path: "/404",
-    element: <Example title="404 - Not Found" />,
+    path: "/not-found",
+    element: <NotFoundPage />,
   },
 ]);
