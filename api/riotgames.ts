@@ -25,10 +25,17 @@ const REGION_HOSTS: Record<string, string> = {
 
 export default async function handler(request: Request) {
 	const url = new URL(request.url)
-	const pathParts = url.pathname.replace(/^\/api\/riotgames\//, "").split("/").filter(Boolean)
 
-	const region = pathParts[0]
-	const apiPath = pathParts.slice(1).join("/")
+	// Pobierz region i path z query params
+	const region = url.searchParams.get("region")
+	const path = url.searchParams.get("path")
+
+	if (!region || !path) {
+		return new Response(JSON.stringify({ error: "Missing region or path", usage: "/api/riotgames?region=europe&path=riot/account/v1/accounts/by-riot-id/Name/Tag" }), {
+			status: 400,
+			headers: { "Content-Type": "application/json" },
+		})
+	}
 
 	const host = REGION_HOSTS[region]
 	if (!host) {
@@ -46,7 +53,7 @@ export default async function handler(request: Request) {
 		})
 	}
 
-	const targetUrl = `https://${host}/${apiPath}${url.search}`
+	const targetUrl = `https://${host}/${path}`
 
 	try {
 		const response = await fetch(targetUrl, {
