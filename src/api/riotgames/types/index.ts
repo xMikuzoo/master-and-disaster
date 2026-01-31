@@ -76,3 +76,17 @@ export interface LeagueEntry {
 export interface GetLeagueEntryRequest {
 	puuid: string
 }
+
+export interface ChampionMastery {
+	championId: number
+	championLevel: number
+	championPoints: number
+	lastPlayTime: number
+	championPointsSinceLastLevel: number
+	championPointsUntilNextLevel: number
+}
+
+export interface GetChampionMasteryTopRequest {
+	puuid: string
+	count?: number
+}

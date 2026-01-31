@@ -5,6 +5,7 @@ import {
 	getLeagueEntryByPUUID,
 	getMatchListByPUUID,
 	getMatchById,
+	getChampionMasteryTop,
 } from "./index"
 import { riotQueryKeys } from "./query-keys"
 import type { GetAccountPathParams, GetMatchListQueryParams } from "./types"
@@ -58,5 +59,18 @@ export function useMatchDetails(matchIds: string[], enabled = true) {
 				data?.data,
 			enabled: enabled && matchIds.length > 0,
 		})),
+	})
+}
+
+export function useChampionMasteryTop(
+	puuid: string,
+	count = 3,
+	enabled = true
+) {
+	return useQuery({
+		queryKey: riotQueryKeys.championMasteryTop(puuid, count),
+		queryFn: () => getChampionMasteryTop({ puuid, count }),
+		select: (data) => data?.data,
+		enabled: enabled && !!puuid,
 	})
 }

@@ -11,6 +11,13 @@ export const riotQueryKeys = {
 	matches: () => [...riotQueryKeys.all, "matches"] as const,
 	matchList: (puuid: string) =>
 		[...riotQueryKeys.matches(), "list", puuid] as const,
+	matchListRanked: (puuid: string) =>
+		[...riotQueryKeys.matches(), "list", "ranked", puuid] as const,
 	matchDetails: (matchId: string) =>
 		[...riotQueryKeys.matches(), "details", matchId] as const,
+	commonMatches: (puuid1: string, puuid2: string) =>
+		[...riotQueryKeys.matches(), "common", puuid1, puuid2] as const,
+	championMastery: () => [...riotQueryKeys.all, "champion-mastery"] as const,
+	championMasteryTop: (puuid: string, count?: number) =>
+		[...riotQueryKeys.championMastery(), "top", puuid, count] as const,
 }

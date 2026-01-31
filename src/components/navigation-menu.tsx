@@ -20,6 +20,14 @@ export function NavigationMenu() {
 						<Link to={RouterPath.HOME}>Home</Link>
 					</NavigationMenuLink>
 				</NavigationMenuItem>
+				<NavigationMenuItem>
+					<NavigationMenuLink
+						asChild
+						className={navigationMenuTriggerStyle()}
+					>
+						<Link to={RouterPath.GAMES_TOGETHER}>Games Together</Link>
+					</NavigationMenuLink>
+				</NavigationMenuItem>
 			</NavigationMenuList>
 		</_NavigationMenu>
 	)

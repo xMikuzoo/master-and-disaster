@@ -1,4 +1,9 @@
-import type { LeagueEntry, GetLeagueEntryRequest } from "./types/index"
+import type {
+	LeagueEntry,
+	GetLeagueEntryRequest,
+	ChampionMastery,
+	GetChampionMasteryTopRequest,
+} from "./types/index"
 import { axiosRequest } from "@/hooks/use-axios"
 import type {
 	Account,
@@ -85,6 +90,23 @@ export const getLeagueEntryByPUUID = async (
 		url: `api/riotgames/${region}/lol/league/v4/entries/by-puuid/${request.puuid}`,
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch league entry data from Riot API",
+	})
+}
+
+export const getChampionMasteryTop = async (
+	request: GetChampionMasteryTopRequest,
+	region: Region = DEFAULT_PLATFORM_REGION
+) => {
+	const params = new URLSearchParams()
+	if (request.count) {
+		params.append("count", request.count.toString())
+	}
+
+	return await axiosRequest<ChampionMastery[]>({
+		url: `api/riotgames/${region}/lol/champion-mastery/v4/champion-masteries/by-puuid/${request.puuid}/top`,
+		method: "GET",
+		defaultErrorMessage: "Failed to fetch champion mastery data from Riot API",
+		params,
 	})
 }
 
