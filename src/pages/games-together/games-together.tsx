@@ -2,7 +2,11 @@ import { useState, useEffect } from "react"
 import { useQueries } from "@tanstack/react-query"
 import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
-import { PlayerStatsCard, GamesTable, OverallStats } from "@/components/games-together"
+import {
+	PlayerStatsCard,
+	GamesTable,
+	OverallStats,
+} from "@/components/games-together"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { ChevronUp } from "lucide-react"
@@ -66,12 +70,10 @@ export function GamesTogetherPage() {
 	}
 
 	return (
-		<div className="space-y-6">
-			<h1 className="text-2xl font-bold">{UI_TEXTS.commonGames}</h1>
-
-			<div className="grid gap-6 lg:grid-cols-[300px_1fr] lg:items-start">
+		<div className="h-[calc(100vh-6rem)] overflow-hidden">
+			<div className="grid h-full gap-6 lg:grid-cols-[300px_1fr]">
 				{/* Player Stats Cards */}
-				<div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+				<div className="h-full space-y-4 overflow-y-auto p-1">
 					{isLoading && commonMatches.length === 0 ? (
 						<>
 							<Skeleton className="h-48 w-full" />
@@ -100,48 +102,53 @@ export function GamesTogetherPage() {
 				</div>
 
 				{/* Games Table */}
-				<div className="space-y-4">
+				<div className="flex h-full flex-col overflow-hidden p-1">
 					{/* Overall Stats Summary */}
 					{commonMatches.length > 0 && account1 && account2 && (
-						<OverallStats
-							matches={commonMatches}
-							player1={account1}
-							player2={account2}
-						/>
+						<div className="shrink-0 pb-4">
+							<OverallStats
+								matches={commonMatches}
+								player1={account1}
+								player2={account2}
+							/>
+						</div>
 					)}
 
-					{isLoading && commonMatches.length === 0 ? (
-						<div className="space-y-2">
-							<Skeleton className="h-10 w-full" />
-							{Array.from({ length: 5 }).map((_, i) => (
-								<Skeleton key={i} className="h-16 w-full" />
-							))}
-						</div>
-					) : account1 && account2 ? (
-						<>
-							<GamesTable
-								matches={commonMatches}
-								puuid1={account1.puuid}
-								puuid2={account2.puuid}
-								isLoadingMore={isFetchingMore}
-							/>
+					{/* Scrollable container for table */}
+					<div className="flex-1 space-y-2 overflow-y-auto">
+						{isLoading && commonMatches.length === 0 ? (
+							<div className="space-y-2">
+								<Skeleton className="h-10 w-full" />
+								{Array.from({ length: 5 }).map((_, i) => (
+									<Skeleton key={i} className="h-16 w-full" />
+								))}
+							</div>
+						) : account1 && account2 ? (
+							<>
+								<GamesTable
+									matches={commonMatches}
+									puuid1={account1.puuid}
+									puuid2={account2.puuid}
+									isLoadingMore={isFetchingMore}
+								/>
 
-							{/* Load More Button */}
-							{hasMore && (
-								<div className="flex justify-center pt-4">
-									<Button
-										onClick={fetchMore}
-										disabled={isFetchingMore}
-										variant="outline"
-									>
-										{isFetchingMore
-											? UI_TEXTS.loading
-											: UI_TEXTS.loadMore}
-									</Button>
-								</div>
-							)}
-						</>
-					) : null}
+								{/* Load More Button */}
+								{hasMore && (
+									<div className="flex justify-center pt-4">
+										<Button
+											onClick={fetchMore}
+											disabled={isFetchingMore}
+											variant="outline"
+										>
+											{isFetchingMore
+												? UI_TEXTS.loading
+												: UI_TEXTS.loadMore}
+										</Button>
+									</div>
+								)}
+							</>
+						) : null}
+					</div>
 				</div>
 			</div>
 
@@ -149,7 +156,7 @@ export function GamesTogetherPage() {
 			{showScrollTop && (
 				<Button
 					onClick={scrollToTop}
-					className="fixed bottom-6 right-6 z-50 rounded-full p-3"
+					className="fixed right-6 bottom-6 z-50 rounded-full p-3"
 					size="icon"
 					variant="outline"
 					aria-label={UI_TEXTS.scrollToTop}
