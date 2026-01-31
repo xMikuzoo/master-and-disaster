@@ -1,27 +1,29 @@
-import { RouterProvider } from "react-router";
-import { MainLayout } from "./layouts/main-layout";
-import { ThemeProvider } from "./providers/ThemeProvider";
-import { router } from "./router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "react-router"
+import { ThemeProvider } from "./providers/theme-provider"
+import { SelectedAccountsProvider } from "./providers/selected-accounts-provider"
+import { router } from "./router"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
+	defaultOptions: {
+		queries: {
+			retry: false,
+			staleTime: 5 * 60 * 1000,
+			gcTime: 10 * 60 * 1000,
+		},
+	},
+})
 
 export function App() {
-  return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <MainLayout>
-          <RouterProvider router={router} />
-        </MainLayout>
-      </QueryClientProvider>
-    </ThemeProvider>
-  );
+	return (
+		<ThemeProvider>
+			<SelectedAccountsProvider>
+				<QueryClientProvider client={queryClient}>
+					<RouterProvider router={router} />
+				</QueryClientProvider>
+			</SelectedAccountsProvider>
+		</ThemeProvider>
+	)
 }
 
-export default App;
+export default App

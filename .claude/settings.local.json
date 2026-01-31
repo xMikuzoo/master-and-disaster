@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)",
+      "Bash(find:*)",
+      "WebFetch(domain:developer.riotgames.com)",
+      "WebFetch(domain:ui.shadcn.com)"
+    ]
+  }
+}
