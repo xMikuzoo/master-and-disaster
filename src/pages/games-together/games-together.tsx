@@ -1,19 +1,30 @@
-import { useMemo } from "react"
-import { useQueries, useQuery } from "@tanstack/react-query"
-import {
-	getAccountByRiotId,
-	getMatchById,
-	getMatchListByPUUID,
-	riotQueryKeys,
-} from "@/api/riotgames"
-import type { Match } from "@/api/riotgames/types"
+import { useMemo, useState, useEffect } from "react"
+import { useQueries } from "@tanstack/react-query"
+import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
 import { PlayerStatsCard, GamesTable } from "@/components/games-together"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ChevronUp } from "lucide-react"
 import { UI_TEXTS } from "@/constants/ui-texts"
+import { useCommonMatches } from "@/hooks/useCommonMatches"
 
 export function GamesTogetherPage() {
+	const [showScrollTop, setShowScrollTop] = useState(false)
+
+	useEffect(() => {
+		const handleScroll = () => {
+			setShowScrollTop(window.scrollY > 300)
+		}
+		window.addEventListener("scroll", handleScroll)
+		return () => window.removeEventListener("scroll", handleScroll)
+	}, [])
+
+	const scrollToTop = () => {
+		window.scrollTo({ top: 0, behavior: "smooth" })
+	}
+
 	// Step 1: Fetch both accounts
 	const accountsQueries = useQueries({
 		queries: TRACKED_PLAYERS.map((player) => ({
@@ -33,50 +44,19 @@ export function GamesTogetherPage() {
 	const accountsLoading = accountsQueries.some((q) => q.isLoading)
 	const accountsError = accountsQueries.find((q) => q.error)?.error
 
-	// Step 2: Fetch match list for player 1 (ranked games only)
-	const matchListQuery = useQuery({
-		queryKey: riotQueryKeys.matchListRanked(account1?.puuid ?? ""),
-		queryFn: () =>
-			getMatchListByPUUID({
-				params: { puuid: account1!.puuid },
-				query: { count: 20, type: "ranked" },
-			}),
-		select: (data) => data?.data,
-		enabled: !!account1?.puuid,
+	// Step 2: Fetch common matches using the custom hook
+	const {
+		commonMatches,
+		isLoading: matchesLoading,
+		isFetchingMore,
+		hasMore,
+		fetchMore,
+	} = useCommonMatches({
+		puuid1: account1?.puuid,
+		puuid2: account2?.puuid,
 	})
 
-	const matchList = matchListQuery.data ?? []
-
-	// Step 3: Fetch details for all matches
-	const matchDetailsQueries = useQueries({
-		queries: matchList.map((matchId) => ({
-			queryKey: riotQueryKeys.matchDetails(matchId),
-			queryFn: () => getMatchById({ matchId }),
-			select: (data: Awaited<ReturnType<typeof getMatchById>>) =>
-				data?.data,
-			enabled: matchList.length > 0,
-		})),
-	})
-
-	const matchDetailsLoading = matchDetailsQueries.some((q) => q.isLoading)
-
-	// Step 4: Filter to find common matches (both players participated)
-	const commonMatches = useMemo(() => {
-		if (!account1?.puuid || !account2?.puuid) return []
-
-		return matchDetailsQueries
-			.map((q) => q.data)
-			.filter((match): match is Match => {
-				if (!match) return false
-				const participants = match.metadata.participants
-				return (
-					participants.includes(account1.puuid) &&
-					participants.includes(account2.puuid)
-				)
-			})
-	}, [matchDetailsQueries, account1?.puuid, account2?.puuid])
-
-	const isLoading = accountsLoading || matchListQuery.isLoading || matchDetailsLoading
+	const isLoading = accountsLoading || matchesLoading
 
 	const winsLosses = useMemo(() => {
 		if (!account1?.puuid) return { wins: 0, losses: 0 }
@@ -100,10 +80,10 @@ export function GamesTogetherPage() {
 		<div className="space-y-6">
 			<h1 className="text-2xl font-bold">{UI_TEXTS.commonGames}</h1>
 
-			<div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+			<div className="grid gap-6 lg:grid-cols-[300px_1fr] lg:items-start">
 				{/* Player Stats Cards */}
-				<div className="space-y-4">
-					{isLoading ? (
+				<div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+					{isLoading && commonMatches.length === 0 ? (
 						<>
 							<Skeleton className="h-48 w-full" />
 							<Skeleton className="h-48 w-full" />
@@ -133,7 +113,7 @@ export function GamesTogetherPage() {
 				{/* Games Table */}
 				<div className="space-y-4">
 					{/* Wins/Losses Summary */}
-					{!isLoading && commonMatches.length > 0 && (
+					{commonMatches.length > 0 && (
 						<div className="flex items-center gap-3">
 							<Badge variant="default" className="text-sm">
 								{winsLosses.wins} {UI_TEXTS.wins}
@@ -144,7 +124,7 @@ export function GamesTogetherPage() {
 						</div>
 					)}
 
-					{isLoading ? (
+					{isLoading && commonMatches.length === 0 ? (
 						<div className="space-y-2">
 							<Skeleton className="h-10 w-full" />
 							{Array.from({ length: 5 }).map((_, i) => (
@@ -152,14 +132,45 @@ export function GamesTogetherPage() {
 							))}
 						</div>
 					) : account1 && account2 ? (
-						<GamesTable
-							matches={commonMatches}
-							puuid1={account1.puuid}
-							puuid2={account2.puuid}
-						/>
+						<>
+							<GamesTable
+								matches={commonMatches}
+								puuid1={account1.puuid}
+								puuid2={account2.puuid}
+								isLoadingMore={isFetchingMore}
+							/>
+
+							{/* Load More Button */}
+							{hasMore && (
+								<div className="flex justify-center pt-4">
+									<Button
+										onClick={fetchMore}
+										disabled={isFetchingMore}
+										variant="outline"
+									>
+										{isFetchingMore
+											? UI_TEXTS.loading
+											: UI_TEXTS.loadMore}
+									</Button>
+								</div>
+							)}
+						</>
 					) : null}
 				</div>
 			</div>
+
+			{/* Scroll to top button */}
+			{showScrollTop && (
+				<Button
+					onClick={scrollToTop}
+					className="fixed bottom-6 right-6 z-50 rounded-full p-3"
+					size="icon"
+					variant="outline"
+					aria-label={UI_TEXTS.scrollToTop}
+				>
+					<ChevronUp className="h-5 w-5" />
+				</Button>
+			)}
 		</div>
 	)
 }

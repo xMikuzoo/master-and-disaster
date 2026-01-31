@@ -1,4 +1,4 @@
-import { memo, useState, useMemo } from "react"
+import { memo, useMemo } from "react"
 import {
 	Table,
 	TableBody,
@@ -7,26 +7,18 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table"
-import {
-	Pagination,
-	PaginationContent,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getChampionIcon } from "@/api/ddragon-cdn"
 import type { Match } from "@/api/riotgames/types"
 import type { ParticipantDto } from "@/api/riotgames/types/match.types"
 import { UI_TEXTS } from "@/constants/ui-texts"
 
-const GAMES_PER_PAGE = 10
-
 interface GamesTableProps {
 	matches: Match[]
 	puuid1: string
 	puuid2: string
+	isLoadingMore?: boolean
 }
 
 function formatDuration(seconds: number): string {
@@ -35,45 +27,81 @@ function formatDuration(seconds: number): string {
 	return `${mins}:${secs.toString().padStart(2, "0")}`
 }
 
-function formatKDA(participant: ParticipantDto): string {
-	return `${participant.kills}/${participant.deaths}/${participant.assists}`
+interface PlayerRowProps {
+	participant: ParticipantDto
+	isTracked: boolean
 }
 
-interface TrackedPlayersCellProps {
+const PlayerRow = memo(function PlayerRow({
+	participant,
+	isTracked,
+}: PlayerRowProps) {
+	return (
+		<div
+			className={`flex items-center gap-1.5 rounded px-1 py-0.5 ${
+				isTracked ? "bg-primary/20 ring-primary/50 ring-1" : ""
+			}`}
+		>
+			<img
+				src={getChampionIcon(participant.championName)}
+				alt={participant.championName}
+				className="h-5 w-5 rounded"
+			/>
+			<span
+				className={`max-w-20 truncate text-xs ${
+					isTracked ? "font-semibold" : "text-muted-foreground"
+				}`}
+			>
+				{participant.riotIdGameName}
+			</span>
+		</div>
+	)
+})
+
+interface TeamsCellProps {
 	participants: ParticipantDto[]
 	puuid1: string
 	puuid2: string
 }
 
-const TrackedPlayersCell = memo(function TrackedPlayersCell({
+const TeamsCell = memo(function TeamsCell({
 	participants,
 	puuid1,
 	puuid2,
-}: TrackedPlayersCellProps) {
-	const trackedParticipants = participants.filter(
-		(p) => p.puuid === puuid1 || p.puuid === puuid2
-	)
+}: TeamsCellProps) {
+	const blueTeam = participants.filter((p) => p.teamId === 100)
+	const redTeam = participants.filter((p) => p.teamId === 200)
+
+	const isTracked = (puuid: string) => puuid === puuid1 || puuid === puuid2
 
 	return (
-		<div className="flex flex-col gap-1">
-			{trackedParticipants.map((p) => (
-				<div
-					key={p.participantId}
-					className="flex items-center gap-2"
-				>
-					<img
-						src={getChampionIcon(p.championName)}
-						alt={p.championName}
-						className="h-6 w-6 rounded border border-primary"
-					/>
-					<span className="max-w-24 truncate text-sm font-medium">
-						{p.riotIdGameName}
-					</span>
-					<span className="text-muted-foreground text-xs">
-						{formatKDA(p)}
-					</span>
+		<div className="flex gap-6">
+			{/* Blue Team */}
+			<div className="space-y-0.5">
+				<div className="text-muted-foreground mb-1 text-[10px] font-medium uppercase">
+					{UI_TEXTS.blueTeam}
 				</div>
-			))}
+				{blueTeam.map((p) => (
+					<PlayerRow
+						key={p.participantId}
+						participant={p}
+						isTracked={isTracked(p.puuid)}
+					/>
+				))}
+			</div>
+			{/* Red Team */}
+			<div className="space-y-0.5">
+				<div className="text-muted-foreground mb-1 text-[10px] font-medium uppercase">
+					{UI_TEXTS.redTeam}
+				</div>
+				{redTeam.map((p) => (
+					<PlayerRow
+						key={p.participantId}
+						participant={p}
+						isTracked={isTracked(p.puuid)}
+					/>
+				))}
+			</div>
 		</div>
 	)
 })
@@ -82,27 +110,13 @@ export const GamesTable = memo(function GamesTable({
 	matches,
 	puuid1,
 	puuid2,
+	isLoadingMore,
 }: GamesTableProps) {
-	const [currentPage, setCurrentPage] = useState(1)
-
 	const sortedMatches = useMemo(() => {
 		return [...matches].sort(
 			(a, b) => b.info.gameStartTimestamp - a.info.gameStartTimestamp
 		)
 	}, [matches])
-
-	const totalPages = Math.ceil(sortedMatches.length / GAMES_PER_PAGE)
-
-	const paginatedMatches = useMemo(() => {
-		const start = (currentPage - 1) * GAMES_PER_PAGE
-		return sortedMatches.slice(start, start + GAMES_PER_PAGE)
-	}, [sortedMatches, currentPage])
-
-	const handlePageChange = (page: number) => {
-		if (page >= 1 && page <= totalPages) {
-			setCurrentPage(page)
-		}
-	}
 
 	if (matches.length === 0) {
 		return (
@@ -121,11 +135,11 @@ export const GamesTable = memo(function GamesTable({
 							<TableHead>{UI_TEXTS.date}</TableHead>
 							<TableHead>{UI_TEXTS.duration}</TableHead>
 							<TableHead>{UI_TEXTS.result}</TableHead>
-							<TableHead>{UI_TEXTS.players}</TableHead>
+							<TableHead>{UI_TEXTS.teams}</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{paginatedMatches.map((match) => {
+						{sortedMatches.map((match) => {
 							const participant1 = match.info.participants.find(
 								(p) => p.puuid === puuid1
 							)
@@ -159,7 +173,7 @@ export const GamesTable = memo(function GamesTable({
 										</Badge>
 									</TableCell>
 									<TableCell>
-										<TrackedPlayersCell
+										<TeamsCell
 											participants={match.info.participants}
 											puuid1={puuid1}
 											puuid2={puuid2}
@@ -168,84 +182,36 @@ export const GamesTable = memo(function GamesTable({
 								</TableRow>
 							)
 						})}
+						{isLoadingMore && (
+							<TableRow>
+								<TableCell>
+									<Skeleton className="h-4 w-20" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-4 w-12" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-6 w-16" />
+								</TableCell>
+								<TableCell>
+									<div className="flex gap-6">
+										<div className="space-y-1">
+											{Array.from({ length: 5 }).map((_, i) => (
+												<Skeleton key={i} className="h-5 w-24" />
+											))}
+										</div>
+										<div className="space-y-1">
+											{Array.from({ length: 5 }).map((_, i) => (
+												<Skeleton key={i} className="h-5 w-24" />
+											))}
+										</div>
+									</div>
+								</TableCell>
+							</TableRow>
+						)}
 					</TableBody>
 				</Table>
 			</div>
-
-			{totalPages > 1 && (
-				<Pagination>
-					<PaginationContent>
-						<PaginationItem>
-							<PaginationPrevious
-								href="#"
-								text={UI_TEXTS.previous}
-								onClick={(e) => {
-									e.preventDefault()
-									handlePageChange(currentPage - 1)
-								}}
-								aria-disabled={currentPage === 1}
-								className={
-									currentPage === 1
-										? "pointer-events-none opacity-50"
-										: ""
-								}
-							/>
-						</PaginationItem>
-
-						{Array.from({ length: totalPages }, (_, i) => i + 1)
-							.filter((page) => {
-								return (
-									page === 1 ||
-									page === totalPages ||
-									Math.abs(page - currentPage) <= 1
-								)
-							})
-							.map((page, index, arr) => {
-								const showEllipsis =
-									index > 0 && page - arr[index - 1] > 1
-
-								return (
-									<>
-										{showEllipsis && (
-											<PaginationItem key={`ellipsis-${page}`}>
-												<span className="px-2">...</span>
-											</PaginationItem>
-										)}
-										<PaginationItem key={page}>
-											<PaginationLink
-												href="#"
-												isActive={page === currentPage}
-												onClick={(e) => {
-													e.preventDefault()
-													handlePageChange(page)
-												}}
-											>
-												{page}
-											</PaginationLink>
-										</PaginationItem>
-									</>
-								)
-							})}
-
-						<PaginationItem>
-							<PaginationNext
-								href="#"
-								text={UI_TEXTS.next}
-								onClick={(e) => {
-									e.preventDefault()
-									handlePageChange(currentPage + 1)
-								}}
-								aria-disabled={currentPage === totalPages}
-								className={
-									currentPage === totalPages
-										? "pointer-events-none opacity-50"
-										: ""
-								}
-							/>
-						</PaginationItem>
-					</PaginationContent>
-				</Pagination>
-			)}
 
 			<div className="text-muted-foreground text-center text-xs">
 				{matches.length} {UI_TEXTS.games}

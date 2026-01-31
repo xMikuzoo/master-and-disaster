@@ -34,4 +34,7 @@ export const UI_TEXTS = {
 	masteryLevel: "Poziom mastery",
 	masteryPoints: "Punkty mastery",
 	players: "Gracze",
+	teams: "Drużyny",
+	loadMore: "Załaduj więcej",
+	scrollToTop: "Przewiń do góry",
 } as const

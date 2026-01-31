@@ -2,8 +2,15 @@ export const getProfileIcon = (iconId: number) => {
 	return `ddragon-cdn/img/profileicon/${iconId}.png`
 }
 
+// Known mismatches between champion names from Match API and actual CDN file names
+// See: https://github.com/RiotGames/developer-relations/issues/693
+const CHAMPION_NAME_FIXES: Record<string, string> = {
+	FiddleSticks: "Fiddlesticks",
+}
+
 export const getChampionIcon = (championName: string) => {
-	return `ddragon-cdn/img/champion/${championName}.png`
+	const fixedName = CHAMPION_NAME_FIXES[championName] ?? championName
+	return `ddragon-cdn/img/champion/${fixedName}.png`
 }
 
 interface ChampionInfo {
