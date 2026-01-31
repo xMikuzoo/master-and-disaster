@@ -2,7 +2,7 @@
 	"rewrites": [
 		{
 			"source": "/ddragon-cdn/:path*",
-			"destination": "/api/ddragon/:path*"
+			"destination": "https://ddragon.leagueoflegends.com/cdn/14.1.1/:path*"
 		},
 		{
 			"source": "/((?!api/).*)",
