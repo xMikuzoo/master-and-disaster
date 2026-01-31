@@ -19,10 +19,10 @@ export function useAccount(params: GetAccountPathParams, enabled = true) {
 	})
 }
 
-export function useSummoner(puuid: string, enabled = true) {
+export function useSummoner(puuid: string | undefined, enabled = true) {
 	return useQuery({
-		queryKey: riotQueryKeys.summoner(puuid),
-		queryFn: () => getSummonerByPUUID({ puuid }),
+		queryKey: riotQueryKeys.summoner(puuid ?? ""),
+		queryFn: () => getSummonerByPUUID({ puuid: puuid! }),
 		select: (data) => data?.data,
 		enabled: enabled && !!puuid,
 	})

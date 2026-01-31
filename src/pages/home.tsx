@@ -6,8 +6,11 @@ import { TRACKED_PLAYERS } from "@/config/players"
 const RUN_QUERIES = true
 
 export function HomePage() {
+	// Flatten all accounts from all players for the home page
+	const allAccounts = TRACKED_PLAYERS.flatMap((player) => player.accounts)
+
 	const accountsQueries = useQueries({
-		queries: TRACKED_PLAYERS.map((account) => ({
+		queries: allAccounts.map((account) => ({
 			queryKey: riotQueryKeys.account(account.gameName, account.tagLine),
 			queryFn: () =>
 				getAccountByRiotId({

@@ -2,16 +2,22 @@ import { memo, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { getChampionIcon, getProfileIcon } from "@/api/ddragon-cdn"
 import type { Match } from "@/api/riotgames/types"
+import type { Account } from "@/api/riotgames/types"
+import type { PlayerConfig } from "@/config/players"
 import { UI_TEXTS } from "@/constants/ui-texts"
 import { useSummoner } from "@/api/riotgames/hooks"
+import { AccountSelector } from "./account-selector"
 
 interface PlayerStatsCardProps {
-	puuid: string
-	gameName: string
-	tagLine: string
+	playerConfig: PlayerConfig
+	selectedAccountIndex: number
+	onAccountChange: (index: number) => void
+	accountData: Account | undefined
 	matches: Match[]
+	isLoadingAccount?: boolean
 }
 
 interface ChampionStat {
@@ -27,14 +33,19 @@ interface ChampionStat {
 }
 
 export const PlayerStatsCard = memo(function PlayerStatsCard({
-	puuid,
-	gameName,
-	tagLine,
+	playerConfig,
+	selectedAccountIndex,
+	onAccountChange,
+	accountData,
 	matches,
+	isLoadingAccount,
 }: PlayerStatsCardProps) {
+	const puuid = accountData?.puuid
 	const { data: summoner } = useSummoner(puuid)
 
 	const championStats = useMemo(() => {
+		if (!puuid) return []
+
 		const statsMap = new Map<number, ChampionStat>()
 
 		for (const match of matches) {
@@ -75,6 +86,30 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 		return stats.sort((a, b) => b.winrate - a.winrate).slice(0, 3)
 	}, [matches, puuid])
 
+	if (isLoadingAccount) {
+		return (
+			<Card className="w-full">
+				<CardHeader className="pb-2">
+					<div className="flex items-center gap-3">
+						<Skeleton className="h-12 w-12 rounded-full" />
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-24" />
+							<Skeleton className="h-3 w-32" />
+						</div>
+					</div>
+				</CardHeader>
+				<CardContent>
+					<Skeleton className="mb-2 h-3 w-20" />
+					<div className="space-y-2">
+						<Skeleton className="h-8 w-full" />
+						<Skeleton className="h-8 w-full" />
+						<Skeleton className="h-8 w-full" />
+					</div>
+				</CardContent>
+			</Card>
+		)
+	}
+
 	return (
 		<Card className="w-full">
 			<CardHeader className="pb-2">
@@ -86,12 +121,17 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 							/>
 						)}
 						<AvatarFallback>
-							{gameName.slice(0, 2).toUpperCase()}
+							{playerConfig.displayName.slice(0, 2).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
-					<CardTitle>
-						{gameName}#{tagLine}
-					</CardTitle>
+					<div className="flex flex-col gap-1">
+						<CardTitle>{playerConfig.displayName}</CardTitle>
+						<AccountSelector
+							accounts={playerConfig.accounts}
+							selectedIndex={selectedAccountIndex}
+							onSelect={onAccountChange}
+						/>
+					</div>
 				</div>
 			</CardHeader>
 			<CardContent>

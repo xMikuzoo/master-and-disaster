@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useQueries } from "@tanstack/react-query"
 import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
@@ -15,6 +15,11 @@ import { useCommonMatches } from "@/hooks/useCommonMatches"
 
 export function GamesTogetherPage() {
 	const [showScrollTop, setShowScrollTop] = useState(false)
+	const [selectedAccounts, setSelectedAccounts] = useState<
+		Record<string, number>
+	>(() =>
+		Object.fromEntries(TRACKED_PLAYERS.map((player) => [player.id, 0]))
+	)
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -28,18 +33,36 @@ export function GamesTogetherPage() {
 		window.scrollTo({ top: 0, behavior: "smooth" })
 	}
 
-	// Step 1: Fetch both accounts
+	const handleAccountChange = useCallback(
+		(playerId: string, index: number) => {
+			setSelectedAccounts((prev) => ({
+				...prev,
+				[playerId]: index,
+			}))
+		},
+		[]
+	)
+
+	// Step 1: Fetch accounts based on selected indices
 	const accountsQueries = useQueries({
-		queries: TRACKED_PLAYERS.map((player) => ({
-			queryKey: riotQueryKeys.account(player.gameName, player.tagLine),
-			queryFn: () =>
-				getAccountByRiotId({
-					gameName: player.gameName,
-					tagLine: player.tagLine,
-				}),
-			select: (data: Awaited<ReturnType<typeof getAccountByRiotId>>) =>
-				data?.data,
-		})),
+		queries: TRACKED_PLAYERS.map((player) => {
+			const selectedIndex = selectedAccounts[player.id] ?? 0
+			const account = player.accounts[selectedIndex]
+			return {
+				queryKey: riotQueryKeys.account(
+					account.gameName,
+					account.tagLine
+				),
+				queryFn: () =>
+					getAccountByRiotId({
+						gameName: account.gameName,
+						tagLine: account.tagLine,
+					}),
+				select: (
+					data: Awaited<ReturnType<typeof getAccountByRiotId>>
+				) => data?.data,
+			}
+		}),
 	})
 
 	const account1 = accountsQueries[0]?.data
@@ -74,31 +97,21 @@ export function GamesTogetherPage() {
 			<div className="grid gap-6 lg:grid-cols-[300px_1fr]">
 				{/* Player Stats Cards */}
 				<div className="space-y-4 px-1 lg:sticky lg:top-20 lg:self-start">
-					{isLoading && commonMatches.length === 0 ? (
-						<>
-							<Skeleton className="h-48 w-full" />
-							<Skeleton className="h-48 w-full" />
-						</>
-					) : (
-						<>
-							{account1 && (
-								<PlayerStatsCard
-									puuid={account1.puuid}
-									gameName={account1.gameName}
-									tagLine={account1.tagLine}
-									matches={commonMatches}
-								/>
-							)}
-							{account2 && (
-								<PlayerStatsCard
-									puuid={account2.puuid}
-									gameName={account2.gameName}
-									tagLine={account2.tagLine}
-									matches={commonMatches}
-								/>
-							)}
-						</>
-					)}
+					{TRACKED_PLAYERS.map((player, index) => (
+						<PlayerStatsCard
+							key={player.id}
+							playerConfig={player}
+							selectedAccountIndex={
+								selectedAccounts[player.id] ?? 0
+							}
+							onAccountChange={(idx) =>
+								handleAccountChange(player.id, idx)
+							}
+							accountData={accountsQueries[index]?.data}
+							matches={commonMatches}
+							isLoadingAccount={accountsQueries[index]?.isLoading}
+						/>
+					))}
 				</div>
 
 				{/* Games Table */}
