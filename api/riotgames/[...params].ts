@@ -25,13 +25,14 @@ const REGION_HOSTS: Record<string, string> = {
 
 export default async function handler(request: Request) {
 	const url = new URL(request.url)
-	const pathParts = url.pathname.replace(/^\/api\/riotgames\//, "").split("/")
+	const pathParts = url.pathname.replace(/^\/api\/riotgames\//, "").split("/").filter(Boolean)
+
 	const region = pathParts[0]
 	const apiPath = pathParts.slice(1).join("/")
 
 	const host = REGION_HOSTS[region]
 	if (!host) {
-		return new Response(JSON.stringify({ error: "Invalid region" }), {
+		return new Response(JSON.stringify({ error: "Invalid region", region }), {
 			status: 400,
 			headers: { "Content-Type": "application/json" },
 		})
@@ -39,13 +40,10 @@ export default async function handler(request: Request) {
 
 	const apiKey = process.env.RIOT_API_KEY
 	if (!apiKey) {
-		return new Response(
-			JSON.stringify({ error: "API key not configured" }),
-			{
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			}
-		)
+		return new Response(JSON.stringify({ error: "API key not configured" }), {
+			status: 500,
+			headers: { "Content-Type": "application/json" },
+		})
 	}
 
 	const targetUrl = `https://${host}/${apiPath}${url.search}`
@@ -64,19 +62,14 @@ export default async function handler(request: Request) {
 		return new Response(data, {
 			status: response.status,
 			headers: {
-				"Content-Type":
-					response.headers.get("Content-Type") || "application/json",
+				"Content-Type": response.headers.get("Content-Type") || "application/json",
 				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 			},
 		})
 	} catch (error) {
-		return new Response(
-			JSON.stringify({ error: "Failed to fetch from Riot API" }),
-			{
-				status: 502,
-				headers: { "Content-Type": "application/json" },
-			}
-		)
+		return new Response(JSON.stringify({ error: "Failed to fetch from Riot API" }), {
+			status: 502,
+			headers: { "Content-Type": "application/json" },
+		})
 	}
 }
