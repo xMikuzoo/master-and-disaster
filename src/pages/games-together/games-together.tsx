@@ -2,11 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useQueries } from "@tanstack/react-query"
 import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
-import {
-	PlayerStatsCard,
-	GamesTable,
-	OverallStats,
-} from "@/components/games-together"
+import { PlayerStatsCard, GamesTable } from "@/components/games-together"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { ChevronUp } from "lucide-react"
@@ -17,9 +13,7 @@ export function GamesTogetherPage() {
 	const [showScrollTop, setShowScrollTop] = useState(false)
 	const [selectedAccounts, setSelectedAccounts] = useState<
 		Record<string, number>
-	>(() =>
-		Object.fromEntries(TRACKED_PLAYERS.map((player) => [player.id, 0]))
-	)
+	>(() => Object.fromEntries(TRACKED_PLAYERS.map((player) => [player.id, 0])))
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -116,17 +110,6 @@ export function GamesTogetherPage() {
 
 				{/* Games Table */}
 				<div className="flex flex-col p-1">
-					{/* Overall Stats Summary */}
-					{commonMatches.length > 0 && account1 && account2 && (
-						<div className="shrink-0 pb-4">
-							<OverallStats
-								matches={commonMatches}
-								player1={account1}
-								player2={account2}
-							/>
-						</div>
-					)}
-
 					{/* Table container */}
 					<div className="space-y-2">
 						{isLoading && commonMatches.length === 0 ? (
