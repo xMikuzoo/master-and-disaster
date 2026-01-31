@@ -42,4 +42,14 @@ export const UI_TEXTS = {
 	bestChampion: "Najlepsza postać",
 	bestKDA: "Najlepsze KDA",
 	mvp: "MVP",
+	// Time ago
+	hoursAgo: "godz. temu",
+	daysAgo: "dni temu",
+	minutesAgo: "min temu",
+	// Match result
+	victory: "Victory",
+	defeat: "Defeat",
+	// Master/Disaster badges
+	master: "Master",
+	disaster: "Disaster",
 } as const

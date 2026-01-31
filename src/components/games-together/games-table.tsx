@@ -1,18 +1,13 @@
 import { memo, useMemo } from "react"
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getChampionIcon } from "@/api/ddragon-cdn"
+import { cn, getPlayersByPerformance } from "@/utils"
 import type { Match } from "@/api/riotgames/types"
-import type { ParticipantDto } from "@/api/riotgames/types/match.types"
 import { UI_TEXTS } from "@/constants/ui-texts"
+import {
+	MatchInfoCell,
+	PlayersComparisonCell,
+	TeamsCell,
+} from "./match-row"
 
 interface GamesTableProps {
 	matches: Match[]
@@ -21,86 +16,97 @@ interface GamesTableProps {
 	isLoadingMore?: boolean
 }
 
-function formatDuration(seconds: number): string {
-	const mins = Math.floor(seconds / 60)
-	const secs = seconds % 60
-	return `${mins}:${secs.toString().padStart(2, "0")}`
-}
-
-interface PlayerRowProps {
-	participant: ParticipantDto
-	isTracked: boolean
-}
-
-const PlayerRow = memo(function PlayerRow({
-	participant,
-	isTracked,
-}: PlayerRowProps) {
-	return (
-		<div
-			className={`flex items-center gap-1.5 rounded px-1 py-0.5 ${
-				isTracked ? "bg-primary/20 ring-primary/50 ring-1" : ""
-			}`}
-		>
-			<img
-				src={getChampionIcon(participant.championName)}
-				alt={participant.championName}
-				className="h-5 w-5 rounded"
-			/>
-			<span
-				className={`max-w-20 truncate text-xs ${
-					isTracked ? "font-semibold" : "text-muted-foreground"
-				}`}
-			>
-				{participant.riotIdGameName}
-			</span>
-		</div>
-	)
-})
-
-interface TeamsCellProps {
-	participants: ParticipantDto[]
+interface MatchRowProps {
+	match: Match
 	puuid1: string
 	puuid2: string
 }
 
-const TeamsCell = memo(function TeamsCell({
-	participants,
+const MatchRow = memo(function MatchRow({
+	match,
 	puuid1,
 	puuid2,
-}: TeamsCellProps) {
-	const blueTeam = participants.filter((p) => p.teamId === 100)
-	const redTeam = participants.filter((p) => p.teamId === 200)
+}: MatchRowProps) {
+	const participant1 = match.info.participants.find((p) => p.puuid === puuid1)
+	const players = getPlayersByPerformance(
+		match.info.participants,
+		puuid1,
+		puuid2
+	)
 
-	const isTracked = (puuid: string) => puuid === puuid1 || puuid === puuid2
+	if (!participant1 || !players) return null
+
+	const didWin = participant1.win
 
 	return (
-		<div className="flex gap-6">
-			{/* Blue Team */}
-			<div className="space-y-0.5">
-				<div className="text-muted-foreground mb-1 text-[10px] font-medium uppercase">
-					{UI_TEXTS.blueTeam}
-				</div>
-				{blueTeam.map((p) => (
-					<PlayerRow
-						key={p.participantId}
-						participant={p}
-						isTracked={isTracked(p.puuid)}
-					/>
-				))}
+		<div
+			className={cn(
+				"flex items-stretch rounded-lg border",
+				didWin
+					? "border-l-4 border-l-green-500 bg-green-500/5"
+					: "border-l-4 border-l-red-500 bg-red-500/5"
+			)}
+		>
+			<MatchInfoCell
+				queueId={match.info.queueId}
+				gameStartTimestamp={match.info.gameStartTimestamp}
+				gameDuration={match.info.gameDuration}
+				didWin={didWin}
+			/>
+			<PlayersComparisonCell
+				master={players.master}
+				disaster={players.disaster}
+			/>
+			<TeamsCell
+				participants={match.info.participants}
+				puuid1={puuid1}
+				puuid2={puuid2}
+			/>
+		</div>
+	)
+})
+
+const LoadingRow = memo(function LoadingRow() {
+	return (
+		<div className="flex items-stretch rounded-lg border">
+			{/* Match info skeleton */}
+			<div className="flex min-w-[120px] flex-col justify-center gap-2 px-4 py-3">
+				<Skeleton className="h-4 w-20" />
+				<Skeleton className="h-3 w-16" />
+				<Skeleton className="h-5 w-14" />
+				<Skeleton className="h-3 w-12" />
 			</div>
-			{/* Red Team */}
-			<div className="space-y-0.5">
-				<div className="text-muted-foreground mb-1 text-[10px] font-medium uppercase">
-					{UI_TEXTS.redTeam}
+
+			{/* Player highlight skeleton */}
+			<div className="flex flex-1 items-center gap-4 border-x px-4 py-3">
+				<Skeleton className="h-16 w-16 rounded-lg" />
+				<div className="flex flex-col gap-1">
+					<Skeleton className="h-6 w-6 rounded" />
+					<Skeleton className="h-6 w-6 rounded" />
 				</div>
-				{redTeam.map((p) => (
-					<PlayerRow
-						key={p.participantId}
-						participant={p}
-						isTracked={isTracked(p.puuid)}
-					/>
-				))}
+				<div className="flex flex-col gap-1">
+					<Skeleton className="h-5 w-20" />
+					<Skeleton className="h-3 w-16" />
+				</div>
+				<div className="flex gap-0.5">
+					{Array.from({ length: 7 }).map((_, i) => (
+						<Skeleton key={i} className="h-7 w-7 rounded" />
+					))}
+				</div>
+			</div>
+
+			{/* Teams skeleton */}
+			<div className="flex gap-6 px-4 py-3">
+				<div className="space-y-1">
+					{Array.from({ length: 5 }).map((_, i) => (
+						<Skeleton key={i} className="h-5 w-24" />
+					))}
+				</div>
+				<div className="space-y-1">
+					{Array.from({ length: 5 }).map((_, i) => (
+						<Skeleton key={i} className="h-5 w-24" />
+					))}
+				</div>
 			</div>
 		</div>
 	)
@@ -128,89 +134,16 @@ export const GamesTable = memo(function GamesTable({
 
 	return (
 		<div className="space-y-4">
-			<div className="rounded-md border">
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>{UI_TEXTS.date}</TableHead>
-							<TableHead>{UI_TEXTS.duration}</TableHead>
-							<TableHead>{UI_TEXTS.result}</TableHead>
-							<TableHead>{UI_TEXTS.teams}</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{sortedMatches.map((match) => {
-							const participant1 = match.info.participants.find(
-								(p) => p.puuid === puuid1
-							)
-
-							if (!participant1) return null
-
-							const didWin = participant1.win
-
-							return (
-								<TableRow key={match.metadata.matchId}>
-									<TableCell>
-										{new Date(
-											match.info.gameStartTimestamp
-										).toLocaleDateString("pl-PL")}
-									</TableCell>
-									<TableCell>
-										{formatDuration(match.info.gameDuration)}
-									</TableCell>
-									<TableCell>
-										<Badge
-											variant={
-												didWin
-													? "default"
-													: "destructive"
-											}
-											className="w-fit"
-										>
-											{didWin
-												? UI_TEXTS.win
-												: UI_TEXTS.loss}
-										</Badge>
-									</TableCell>
-									<TableCell>
-										<TeamsCell
-											participants={match.info.participants}
-											puuid1={puuid1}
-											puuid2={puuid2}
-										/>
-									</TableCell>
-								</TableRow>
-							)
-						})}
-						{isLoadingMore && (
-							<TableRow>
-								<TableCell>
-									<Skeleton className="h-4 w-20" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-12" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-6 w-16" />
-								</TableCell>
-								<TableCell>
-									<div className="flex gap-6">
-										<div className="space-y-1">
-											{Array.from({ length: 5 }).map((_, i) => (
-												<Skeleton key={i} className="h-5 w-24" />
-											))}
-										</div>
-										<div className="space-y-1">
-											{Array.from({ length: 5 }).map((_, i) => (
-												<Skeleton key={i} className="h-5 w-24" />
-											))}
-										</div>
-									</div>
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
+			<div className="space-y-2">
+				{sortedMatches.map((match) => (
+					<MatchRow
+						key={match.metadata.matchId}
+						match={match}
+						puuid1={puuid1}
+						puuid2={puuid2}
+					/>
+				))}
+				{isLoadingMore && <LoadingRow />}
 			</div>
 
 			<div className="text-muted-foreground text-center text-xs">

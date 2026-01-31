@@ -70,10 +70,10 @@ export function GamesTogetherPage() {
 	}
 
 	return (
-		<div className="h-[calc(100vh-6rem)] overflow-hidden">
-			<div className="grid h-full gap-6 lg:grid-cols-[300px_1fr]">
+		<div>
+			<div className="grid gap-6 lg:grid-cols-[300px_1fr]">
 				{/* Player Stats Cards */}
-				<div className="h-full space-y-4 overflow-y-auto p-1">
+				<div className="space-y-4 px-1 lg:sticky lg:top-20 lg:self-start">
 					{isLoading && commonMatches.length === 0 ? (
 						<>
 							<Skeleton className="h-48 w-full" />
@@ -102,7 +102,7 @@ export function GamesTogetherPage() {
 				</div>
 
 				{/* Games Table */}
-				<div className="flex h-full flex-col overflow-hidden p-1">
+				<div className="flex flex-col p-1">
 					{/* Overall Stats Summary */}
 					{commonMatches.length > 0 && account1 && account2 && (
 						<div className="shrink-0 pb-4">
@@ -114,8 +114,8 @@ export function GamesTogetherPage() {
 						</div>
 					)}
 
-					{/* Scrollable container for table */}
-					<div className="flex-1 space-y-2 overflow-y-auto">
+					{/* Table container */}
+					<div className="space-y-2">
 						{isLoading && commonMatches.length === 0 ? (
 							<div className="space-y-2">
 								<Skeleton className="h-10 w-full" />
