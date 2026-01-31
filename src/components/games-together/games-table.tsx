@@ -20,8 +20,6 @@ import { getChampionIcon } from "@/api/ddragon-cdn"
 import type { Match } from "@/api/riotgames/types"
 import type { ParticipantDto } from "@/api/riotgames/types/match.types"
 import { UI_TEXTS } from "@/constants/ui-texts"
-import { TEAM_IDS } from "@/constants"
-import { cn } from "@/utils/cn"
 
 const GAMES_PER_PAGE = 10
 
@@ -41,50 +39,41 @@ function formatKDA(participant: ParticipantDto): string {
 	return `${participant.kills}/${participant.deaths}/${participant.assists}`
 }
 
-interface TeamCellProps {
+interface TrackedPlayersCellProps {
 	participants: ParticipantDto[]
-	trackedPuuids: string[]
-	teamColor: "blue" | "red"
+	puuid1: string
+	puuid2: string
 }
 
-const TeamCell = memo(function TeamCell({
+const TrackedPlayersCell = memo(function TrackedPlayersCell({
 	participants,
-	trackedPuuids,
-	teamColor,
-}: TeamCellProps) {
+	puuid1,
+	puuid2,
+}: TrackedPlayersCellProps) {
+	const trackedParticipants = participants.filter(
+		(p) => p.puuid === puuid1 || p.puuid === puuid2
+	)
+
 	return (
-		<div className="flex flex-col gap-0.5">
-			{participants.map((p) => {
-				const isTracked = trackedPuuids.includes(p.puuid)
-				return (
-					<div
-						key={p.participantId}
-						className={cn(
-							"flex items-center gap-1",
-							isTracked && "font-semibold text-primary"
-						)}
-					>
-						<img
-							src={getChampionIcon(p.championName)}
-							alt={p.championName}
-							className={cn(
-								"h-5 w-5 rounded border",
-								isTracked
-									? "border-primary"
-									: teamColor === "blue"
-										? "border-blue-500"
-										: "border-red-500"
-							)}
-						/>
-						<span className="max-w-20 truncate text-xs">
-							{p.riotIdGameName}
-						</span>
-						<span className="text-muted-foreground text-xs">
-							{formatKDA(p)}
-						</span>
-					</div>
-				)
-			})}
+		<div className="flex flex-col gap-1">
+			{trackedParticipants.map((p) => (
+				<div
+					key={p.participantId}
+					className="flex items-center gap-2"
+				>
+					<img
+						src={getChampionIcon(p.championName)}
+						alt={p.championName}
+						className="h-6 w-6 rounded border border-primary"
+					/>
+					<span className="max-w-24 truncate text-sm font-medium">
+						{p.riotIdGameName}
+					</span>
+					<span className="text-muted-foreground text-xs">
+						{formatKDA(p)}
+					</span>
+				</div>
+			))}
 		</div>
 	)
 })
@@ -95,7 +84,6 @@ export const GamesTable = memo(function GamesTable({
 	puuid2,
 }: GamesTableProps) {
 	const [currentPage, setCurrentPage] = useState(1)
-	const trackedPuuids = useMemo(() => [puuid1, puuid2], [puuid1, puuid2])
 
 	const sortedMatches = useMemo(() => {
 		return [...matches].sort(
@@ -133,8 +121,7 @@ export const GamesTable = memo(function GamesTable({
 							<TableHead>{UI_TEXTS.date}</TableHead>
 							<TableHead>{UI_TEXTS.duration}</TableHead>
 							<TableHead>{UI_TEXTS.result}</TableHead>
-							<TableHead>{UI_TEXTS.blueTeam}</TableHead>
-							<TableHead>{UI_TEXTS.redTeam}</TableHead>
+							<TableHead>{UI_TEXTS.players}</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -145,14 +132,7 @@ export const GamesTable = memo(function GamesTable({
 
 							if (!participant1) return null
 
-							const blueTeam = match.info.participants.filter(
-								(p) => p.teamId === TEAM_IDS.BLUE
-							)
-							const redTeam = match.info.participants.filter(
-								(p) => p.teamId === TEAM_IDS.RED
-							)
-
-							const blueWon = blueTeam[0]?.win
+							const didWin = participant1.win
 
 							return (
 								<TableRow key={match.metadata.matchId}>
@@ -165,45 +145,24 @@ export const GamesTable = memo(function GamesTable({
 										{formatDuration(match.info.gameDuration)}
 									</TableCell>
 									<TableCell>
-										<div className="flex flex-col gap-1">
-											<Badge
-												variant={
-													blueWon
-														? "default"
-														: "destructive"
-												}
-												className="w-fit"
-											>
-												{blueWon
-													? UI_TEXTS.win
-													: UI_TEXTS.loss}
-											</Badge>
-											<Badge
-												variant={
-													!blueWon
-														? "default"
-														: "destructive"
-												}
-												className="w-fit"
-											>
-												{!blueWon
-													? UI_TEXTS.win
-													: UI_TEXTS.loss}
-											</Badge>
-										</div>
+										<Badge
+											variant={
+												didWin
+													? "default"
+													: "destructive"
+											}
+											className="w-fit"
+										>
+											{didWin
+												? UI_TEXTS.win
+												: UI_TEXTS.loss}
+										</Badge>
 									</TableCell>
 									<TableCell>
-										<TeamCell
-											participants={blueTeam}
-											trackedPuuids={trackedPuuids}
-											teamColor="blue"
-										/>
-									</TableCell>
-									<TableCell>
-										<TeamCell
-											participants={redTeam}
-											trackedPuuids={trackedPuuids}
-											teamColor="red"
+										<TrackedPlayersCell
+											participants={match.info.participants}
+											puuid1={puuid1}
+											puuid2={puuid2}
 										/>
 									</TableCell>
 								</TableRow>

@@ -1,17 +1,11 @@
 import { memo, useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import {
-	getChampionIcon,
-	getProfileIcon,
-	getChampionData,
-	getChampionNameById,
-} from "@/api/ddragon-cdn"
+import { getChampionIcon, getProfileIcon } from "@/api/ddragon-cdn"
 import type { Match } from "@/api/riotgames/types"
 import { UI_TEXTS } from "@/constants/ui-texts"
-import { useSummoner, useChampionMasteryTop } from "@/api/riotgames/hooks"
+import { useSummoner } from "@/api/riotgames/hooks"
 
 interface PlayerStatsCardProps {
 	puuid: string
@@ -20,14 +14,16 @@ interface PlayerStatsCardProps {
 	matches: Match[]
 }
 
-function formatMasteryPoints(points: number): string {
-	if (points >= 1000000) {
-		return `${(points / 1000000).toFixed(1)}M`
-	}
-	if (points >= 1000) {
-		return `${(points / 1000).toFixed(0)}K`
-	}
-	return points.toString()
+interface ChampionStat {
+	championId: number
+	championName: string
+	gamesPlayed: number
+	wins: number
+	kills: number
+	deaths: number
+	assists: number
+	winrate: number
+	kda: number
 }
 
 export const PlayerStatsCard = memo(function PlayerStatsCard({
@@ -37,31 +33,47 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 	matches,
 }: PlayerStatsCardProps) {
 	const { data: summoner } = useSummoner(puuid)
-	const { data: masteryData } = useChampionMasteryTop(puuid, 3)
 
-	const { data: championData } = useQuery({
-		queryKey: ["ddragon", "champions"],
-		queryFn: getChampionData,
-		staleTime: Infinity,
-	})
+	const championStats = useMemo(() => {
+		const statsMap = new Map<number, ChampionStat>()
 
-	const masteryWithNames = useMemo(() => {
-		if (!masteryData || !championData) return []
-		return masteryData.map((mastery) => ({
-			...mastery,
-			championName: getChampionNameById(championData, mastery.championId),
-		}))
-	}, [masteryData, championData])
+		for (const match of matches) {
+			const participant = match.info.participants.find(
+				(p) => p.puuid === puuid
+			)
+			if (!participant) continue
 
-	const totalWins = useMemo(
-		() =>
-			matches.filter((m) =>
-				m.info.participants.find((p) => p.puuid === puuid && p.win)
-			).length,
-		[matches, puuid]
-	)
+			const existing = statsMap.get(participant.championId)
+			if (existing) {
+				existing.gamesPlayed++
+				existing.wins += participant.win ? 1 : 0
+				existing.kills += participant.kills
+				existing.deaths += participant.deaths
+				existing.assists += participant.assists
+			} else {
+				statsMap.set(participant.championId, {
+					championId: participant.championId,
+					championName: participant.championName,
+					gamesPlayed: 1,
+					wins: participant.win ? 1 : 0,
+					kills: participant.kills,
+					deaths: participant.deaths,
+					assists: participant.assists,
+					winrate: 0,
+					kda: 0,
+				})
+			}
+		}
 
-	const totalLosses = matches.length - totalWins
+		const stats = Array.from(statsMap.values())
+		for (const stat of stats) {
+			stat.winrate = (stat.wins / stat.gamesPlayed) * 100
+			stat.kda =
+				(stat.kills + stat.assists) / Math.max(stat.deaths, 1)
+		}
+
+		return stats.sort((a, b) => b.winrate - a.winrate).slice(0, 3)
+	}, [matches, puuid])
 
 	return (
 		<Card className="w-full">
@@ -77,19 +89,9 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 							{gameName.slice(0, 2).toUpperCase()}
 						</AvatarFallback>
 					</Avatar>
-					<div>
-						<CardTitle>
-							{gameName}#{tagLine}
-						</CardTitle>
-						<div className="text-muted-foreground mt-1 flex gap-2 text-xs">
-							<span className="text-green-500">
-								{totalWins} {UI_TEXTS.wins}
-							</span>
-							<span className="text-red-500">
-								{totalLosses} {UI_TEXTS.losses}
-							</span>
-						</div>
-					</div>
+					<CardTitle>
+						{gameName}#{tagLine}
+					</CardTitle>
 				</div>
 			</CardHeader>
 			<CardContent>
@@ -97,33 +99,35 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 					{UI_TEXTS.topChampions}
 				</div>
 				<div className="space-y-2">
-					{masteryWithNames.map((mastery) => (
+					{championStats.map((stat) => (
 						<div
-							key={mastery.championId}
+							key={stat.championId}
 							className="flex items-center gap-2"
 						>
-							{mastery.championName && (
-								<img
-									src={getChampionIcon(mastery.championName)}
-									alt={mastery.championName}
-									className="h-8 w-8 rounded"
-								/>
-							)}
+							<img
+								src={getChampionIcon(stat.championName)}
+								alt={stat.championName}
+								className="h-8 w-8 rounded"
+							/>
 							<div className="flex-1">
 								<div className="text-xs font-medium">
-									{mastery.championName ?? "Unknown"}
+									{stat.championName}
 								</div>
 								<div className="text-muted-foreground text-xs">
-									{UI_TEXTS.masteryLevel}{" "}
-									{mastery.championLevel}
+									{stat.gamesPlayed} {UI_TEXTS.games} •{" "}
+									{stat.kda.toFixed(1)} KDA
 								</div>
 							</div>
-							<Badge variant="secondary">
-								{formatMasteryPoints(mastery.championPoints)}
+							<Badge
+								variant={
+									stat.winrate >= 50 ? "default" : "secondary"
+								}
+							>
+								{stat.winrate.toFixed(0)}% WR
 							</Badge>
 						</div>
 					))}
-					{masteryWithNames.length === 0 && (
+					{championStats.length === 0 && (
 						<div className="text-muted-foreground text-xs">
 							{UI_TEXTS.noCommonGames}
 						</div>

@@ -33,4 +33,5 @@ export const UI_TEXTS = {
 	redTeam: "Czerwoni",
 	masteryLevel: "Poziom mastery",
 	masteryPoints: "Punkty mastery",
+	players: "Gracze",
 } as const

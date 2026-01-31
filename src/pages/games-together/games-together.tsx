@@ -10,6 +10,7 @@ import type { Match } from "@/api/riotgames/types"
 import { TRACKED_PLAYERS } from "@/config/players"
 import { PlayerStatsCard, GamesTable } from "@/components/games-together"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { UI_TEXTS } from "@/constants/ui-texts"
 
 export function GamesTogetherPage() {
@@ -77,6 +78,16 @@ export function GamesTogetherPage() {
 
 	const isLoading = accountsLoading || matchListQuery.isLoading || matchDetailsLoading
 
+	const winsLosses = useMemo(() => {
+		if (!account1?.puuid) return { wins: 0, losses: 0 }
+
+		const wins = commonMatches.filter((m) =>
+			m.info.participants.find((p) => p.puuid === account1.puuid && p.win)
+		).length
+
+		return { wins, losses: commonMatches.length - wins }
+	}, [commonMatches, account1?.puuid])
+
 	if (accountsError) {
 		return (
 			<div className="text-destructive p-4">
@@ -120,7 +131,19 @@ export function GamesTogetherPage() {
 				</div>
 
 				{/* Games Table */}
-				<div>
+				<div className="space-y-4">
+					{/* Wins/Losses Summary */}
+					{!isLoading && commonMatches.length > 0 && (
+						<div className="flex items-center gap-3">
+							<Badge variant="default" className="text-sm">
+								{winsLosses.wins} {UI_TEXTS.wins}
+							</Badge>
+							<Badge variant="destructive" className="text-sm">
+								{winsLosses.losses} {UI_TEXTS.losses}
+							</Badge>
+						</div>
+					)}
+
 					{isLoading ? (
 						<div className="space-y-2">
 							<Skeleton className="h-10 w-full" />
