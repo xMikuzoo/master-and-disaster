@@ -10,4 +10,5 @@ export const TEAM_IDS = {
 
 export const STORAGE_KEYS = {
 	THEME: "master-or-disaster-ui-theme",
+	SELECTED_ACCOUNTS: "master-or-disaster-selected-accounts",
 } as const

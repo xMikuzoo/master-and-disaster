@@ -1,6 +1,7 @@
 export const UI_TEXTS = {
 	recentMatches: "Ostatnie mecze",
 	gamesTogether: "Gry razem",
+	viewGamesTogether: "Zobacz wspólne gry",
 	level: "Poziom",
 	ranking: "Ranking",
 	toggleTheme: "Przełącz motyw",

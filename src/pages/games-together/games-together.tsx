@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useQueries } from "@tanstack/react-query"
 import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
@@ -8,12 +8,11 @@ import { Button } from "@/components/ui/button"
 import { ChevronUp } from "lucide-react"
 import { UI_TEXTS } from "@/constants/ui-texts"
 import { useCommonMatches } from "@/hooks/useCommonMatches"
+import { useSelectedAccounts } from "@/hooks/use-selected-accounts"
 
 export function GamesTogetherPage() {
 	const [showScrollTop, setShowScrollTop] = useState(false)
-	const [selectedAccounts, setSelectedAccounts] = useState<
-		Record<string, number>
-	>(() => Object.fromEntries(TRACKED_PLAYERS.map((player) => [player.id, 0])))
+	const { selectedAccounts, setSelectedAccount } = useSelectedAccounts()
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -26,16 +25,6 @@ export function GamesTogetherPage() {
 	const scrollToTop = () => {
 		window.scrollTo({ top: 0, behavior: "smooth" })
 	}
-
-	const handleAccountChange = useCallback(
-		(playerId: string, index: number) => {
-			setSelectedAccounts((prev) => ({
-				...prev,
-				[playerId]: index,
-			}))
-		},
-		[]
-	)
 
 	// Step 1: Fetch accounts based on selected indices
 	const accountsQueries = useQueries({
@@ -99,7 +88,7 @@ export function GamesTogetherPage() {
 								selectedAccounts[player.id] ?? 0
 							}
 							onAccountChange={(idx) =>
-								handleAccountChange(player.id, idx)
+								setSelectedAccount(player.id, idx)
 							}
 							accountData={accountsQueries[index]?.data}
 							matches={commonMatches}

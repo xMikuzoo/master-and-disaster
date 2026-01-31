@@ -1,29 +1,22 @@
-import { useState, useCallback, useMemo } from "react"
+import { useMemo } from "react"
 import { useQueries } from "@tanstack/react-query"
+import { Link } from "react-router"
 import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
 import { useSummoner } from "@/api/riotgames/hooks"
 import { usePlayerMatches } from "@/hooks/usePlayerMatches"
+import { useSelectedAccounts } from "@/hooks/use-selected-accounts"
 import { MasterDisasterBanner, PlayerDashboardCard } from "@/components/dashboard"
+import { Button } from "@/components/ui/button"
+import { UI_TEXTS } from "@/constants/ui-texts"
+import { RouterPath } from "@/types/enums"
 import {
 	calculateAggregatedStats,
 	determineMasterDisaster,
 } from "@/utils/dashboard-stats"
 
 export function HomePage() {
-	const [selectedAccounts, setSelectedAccounts] = useState<
-		Record<string, number>
-	>(() => Object.fromEntries(TRACKED_PLAYERS.map((player) => [player.id, 0])))
-
-	const handleAccountChange = useCallback(
-		(playerId: string, index: number) => {
-			setSelectedAccounts((prev) => ({
-				...prev,
-				[playerId]: index,
-			}))
-		},
-		[]
-	)
+	const { selectedAccounts, setSelectedAccount } = useSelectedAccounts()
 
 	// Fetch accounts based on selected indices
 	const accountsQueries = useQueries({
@@ -103,6 +96,16 @@ export function HomePage() {
 
 	return (
 		<div className="space-y-6">
+			{/* Header with title and CTA */}
+			<div className="flex items-center justify-between">
+				<h1 className="text-2xl font-bold">Master and Disaster</h1>
+				<Button asChild variant="outline">
+					<Link to={RouterPath.GAMES_TOGETHER}>
+						{UI_TEXTS.viewGamesTogether}
+					</Link>
+				</Button>
+			</div>
+
 			{/* Master vs Disaster Banner */}
 			<MasterDisasterBanner
 				player1={player1Info}
@@ -126,7 +129,7 @@ export function HomePage() {
 								selectedAccounts[player.id] ?? 0
 							}
 							onAccountChange={(idx) =>
-								handleAccountChange(player.id, idx)
+								setSelectedAccount(player.id, idx)
 							}
 							puuid={account?.puuid}
 							matches={matches}
