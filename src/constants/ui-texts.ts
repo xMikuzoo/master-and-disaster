@@ -37,4 +37,9 @@ export const UI_TEXTS = {
 	teams: "Drużyny",
 	loadMore: "Załaduj więcej",
 	scrollToTop: "Przewiń do góry",
+	overallStats: "Podsumowanie",
+	overallWinrate: "Ogólny Winrate",
+	bestChampion: "Najlepsza postać",
+	bestKDA: "Najlepsze KDA",
+	mvp: "MVP",
 } as const

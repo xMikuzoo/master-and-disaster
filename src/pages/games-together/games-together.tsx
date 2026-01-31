@@ -1,10 +1,9 @@
-import { useMemo, useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useQueries } from "@tanstack/react-query"
 import { getAccountByRiotId, riotQueryKeys } from "@/api/riotgames"
 import { TRACKED_PLAYERS } from "@/config/players"
-import { PlayerStatsCard, GamesTable } from "@/components/games-together"
+import { PlayerStatsCard, GamesTable, OverallStats } from "@/components/games-together"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ChevronUp } from "lucide-react"
 import { UI_TEXTS } from "@/constants/ui-texts"
@@ -58,16 +57,6 @@ export function GamesTogetherPage() {
 
 	const isLoading = accountsLoading || matchesLoading
 
-	const winsLosses = useMemo(() => {
-		if (!account1?.puuid) return { wins: 0, losses: 0 }
-
-		const wins = commonMatches.filter((m) =>
-			m.info.participants.find((p) => p.puuid === account1.puuid && p.win)
-		).length
-
-		return { wins, losses: commonMatches.length - wins }
-	}, [commonMatches, account1?.puuid])
-
 	if (accountsError) {
 		return (
 			<div className="text-destructive p-4">
@@ -112,16 +101,13 @@ export function GamesTogetherPage() {
 
 				{/* Games Table */}
 				<div className="space-y-4">
-					{/* Wins/Losses Summary */}
-					{commonMatches.length > 0 && (
-						<div className="flex items-center gap-3">
-							<Badge variant="default" className="text-sm">
-								{winsLosses.wins} {UI_TEXTS.wins}
-							</Badge>
-							<Badge variant="destructive" className="text-sm">
-								{winsLosses.losses} {UI_TEXTS.losses}
-							</Badge>
-						</div>
+					{/* Overall Stats Summary */}
+					{commonMatches.length > 0 && account1 && account2 && (
+						<OverallStats
+							matches={commonMatches}
+							player1={account1}
+							player2={account2}
+						/>
 					)}
 
 					{isLoading && commonMatches.length === 0 ? (
