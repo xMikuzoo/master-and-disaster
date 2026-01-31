@@ -7,6 +7,7 @@ import {
 } from "@/api/ddragon-cdn"
 import { Badge } from "@/components/ui/badge"
 import { UI_TEXTS } from "@/constants/ui-texts"
+import { StatsComparisonColumn } from "./StatsComparisonColumn"
 import type { ParticipantDto } from "@/api/riotgames/types/match.types"
 
 interface PlayersComparisonCellProps {
@@ -165,8 +166,9 @@ export const PlayersComparisonCell = memo(function PlayersComparisonCell({
 	disaster,
 }: PlayersComparisonCellProps) {
 	return (
-		<div className="flex flex-1 items-center gap-3 border-x px-4 py-2">
+		<div className="flex flex-1 items-center justify-center gap-3 border-x px-4 py-2">
 			<PlayerCard player={master} variant="master" />
+			<StatsComparisonColumn master={master} disaster={disaster} />
 			<PlayerCard player={disaster} variant="disaster" />
 		</div>
 	)

@@ -106,3 +106,20 @@ export function formatKdaRatio(
 	const ratio = (kills + assists) / deaths
 	return `${ratio.toFixed(2)}:1`
 }
+
+/**
+ * Formats a number in compact notation (e.g., 12345 -> "12.3k")
+ */
+export function formatCompactNumber(num: number): string {
+	if (num >= 1000) {
+		return `${(num / 1000).toFixed(1)}k`
+	}
+	return num.toString()
+}
+
+/**
+ * Calculates total CS (minions + jungle monsters)
+ */
+export function getTotalCS(participant: ParticipantDto): number {
+	return participant.totalMinionsKilled + participant.neutralMinionsKilled
+}

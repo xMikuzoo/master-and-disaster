@@ -7,4 +7,6 @@ export {
 	getPlayersByPerformance,
 	getMultikillBadges,
 	formatKdaRatio,
+	formatCompactNumber,
+	getTotalCS,
 } from "./match-utils"

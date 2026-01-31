@@ -52,4 +52,17 @@ export const UI_TEXTS = {
 	// Master/Disaster badges
 	master: "Master",
 	disaster: "Disaster",
+	// Stats comparison
+	cs: "CS",
+	gold: "Gold",
+	damage: "DMG",
+	vision: "Vision",
+	// Overall stats
+	totalDamage: "Obrażenia",
+	totalGold: "Złoto",
+	totalVision: "Wizja",
+	totalCS: "CS",
+	avgKda: "Średnie KDA",
+	gamesPlayed: "Gry",
+	winrateTogether: "Winrate razem",
 } as const
