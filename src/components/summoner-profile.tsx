@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react"
+import { memo, useMemo } from "react"
 import {
 	getLeagueEntryByPUUID,
 	getSummonerByPUUID,
@@ -8,25 +8,14 @@ import { useQuery } from "@tanstack/react-query"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import {
 	Item,
-	ItemActions,
 	ItemContent,
 	ItemDescription,
 	ItemMedia,
 	ItemTitle,
 	ItemGroup,
-	ItemSeparator,
 } from "@/components/ui/item"
 import type { Account } from "@/api/riotgames/types"
 import { SummonerProfileSkeleton } from "./summoner-profile.skeleton"
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { ButtonGroup } from "@/components/ui/button-group"
-import { XIcon } from "lucide-react"
 import { Matches } from "./matches"
 import { getProfileIcon } from "@/api/ddragon-cdn"
 import { UI_TEXTS } from "@/constants/ui-texts"
@@ -36,9 +25,6 @@ type SummonerProfileProps = Account
 export const SummonerProfile = memo(function SummonerProfile(
 	props: SummonerProfileProps
 ) {
-	const [selectedQueueType, setSelectedQueueType] = useState<string | null>(
-		null
-	)
 
 	const {
 		data: summoner,
@@ -61,11 +47,11 @@ export const SummonerProfile = memo(function SummonerProfile(
 		enabled: !!summoner,
 	})
 
-	const filteredLeagueEntry = useMemo(() => {
+	const soloQueueEntry = useMemo(() => {
 		return leagueEntry?.find(
-			(entry) => entry.queueType === selectedQueueType
+			(entry) => entry.queueType === "RANKED_SOLO_5x5"
 		)
-	}, [leagueEntry, selectedQueueType])
+	}, [leagueEntry])
 
 	return (
 		<>
@@ -98,85 +84,15 @@ export const SummonerProfile = memo(function SummonerProfile(
 								</ItemTitle>
 								<ItemDescription>
 									{UI_TEXTS.level}: {summoner?.summonerLevel}
+									{soloQueueEntry && (
+										<>
+											{" | "}
+											{soloQueueEntry.tier} {soloQueueEntry.rank} - {soloQueueEntry.leaguePoints} LP
+										</>
+									)}
 								</ItemDescription>
 							</ItemContent>
-							<ItemActions>
-								{!!leagueEntry && (
-									<DropdownMenu>
-										<ButtonGroup>
-											<DropdownMenuTrigger asChild>
-												<Button variant={"outline"}>
-													{UI_TEXTS.ranking}
-												</Button>
-											</DropdownMenuTrigger>
-											{!!filteredLeagueEntry && (
-												<Button
-													variant={"outline"}
-													size={"icon"}
-													onClick={() =>
-														setSelectedQueueType(
-															null
-														)
-													}
-												>
-													<XIcon />
-												</Button>
-											)}
-										</ButtonGroup>
-										<DropdownMenuContent className="w-fit">
-											{leagueEntry.map((entry) => (
-												<DropdownMenuItem
-													key={entry.queueType}
-													onClick={() =>
-														setSelectedQueueType(
-															entry.queueType
-														)
-													}
-												>
-													{entry.queueType}
-												</DropdownMenuItem>
-											))}
-										</DropdownMenuContent>
-									</DropdownMenu>
-								)}
-							</ItemActions>
 						</Item>
-						{!!leagueEntry &&
-							!!selectedQueueType &&
-							filteredLeagueEntry && (
-								<>
-									<ItemSeparator />
-									<Item
-										variant={"outline"}
-										className="w-fit min-w-96"
-									>
-										<ItemContent>
-											<ItemTitle>
-												{filteredLeagueEntry.tier}{" "}
-												{filteredLeagueEntry.rank}{" "}
-												-{" "}
-											</ItemTitle>
-											<ItemDescription>
-												{
-													filteredLeagueEntry.leaguePoints
-												}{" "}
-												LP
-											</ItemDescription>
-										</ItemContent>
-										<ItemActions>
-											{filteredLeagueEntry.miniSeries && (
-												<div>
-													Progress:{" "}
-													{
-														filteredLeagueEntry
-															.miniSeries.progress
-													}
-												</div>
-											)}
-										</ItemActions>
-									</Item>
-								</>
-							)}
 					</ItemGroup>
 				)
 			)}
