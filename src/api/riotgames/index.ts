@@ -21,12 +21,16 @@ import {
 	DEFAULT_PLATFORM_REGION,
 } from "./config"
 
+function riotApiUrl(region: string, path: string): string {
+	return `/api/riotgames?region=${region}&path=${encodeURIComponent(path)}`
+}
+
 export const getAccountByRiotId = async (
 	pathParams: GetAccountPathParams,
 	region: Region = DEFAULT_ACCOUNT_REGION
 ) => {
 	return await axiosRequest<Account>({
-		url: `api/riotgames/${region}/riot/account/v1/accounts/by-riot-id/${pathParams.gameName}/${pathParams.tagLine}`,
+		url: riotApiUrl(region, `riot/account/v1/accounts/by-riot-id/${pathParams.gameName}/${pathParams.tagLine}`),
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch account data from Riot API",
 	})
@@ -37,7 +41,7 @@ export const getSummonerByPUUID = async (
 	region: Region = DEFAULT_PLATFORM_REGION
 ) => {
 	return await axiosRequest<Summoner>({
-		url: `api/riotgames/${region}/lol/summoner/v4/summoners/by-puuid/${pathParams.puuid}`,
+		url: riotApiUrl(region, `lol/summoner/v4/summoners/by-puuid/${pathParams.puuid}`),
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch summoner data from Riot API",
 	})
@@ -64,7 +68,7 @@ export const getMatchListByPUUID = async (
 	params.append("count", (request.query?.count ?? 20).toString())
 
 	return await axiosRequest<MatchList>({
-		url: `api/riotgames/${region}/lol/match/v5/matches/by-puuid/${request.params.puuid}/ids`,
+		url: riotApiUrl(region, `lol/match/v5/matches/by-puuid/${request.params.puuid}/ids`),
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch match list from Riot API",
 		params: params,
@@ -76,7 +80,7 @@ export const getMatchById = async (
 	region: Region = DEFAULT_ACCOUNT_REGION
 ) => {
 	return await axiosRequest<Match>({
-		url: `api/riotgames/${region}/lol/match/v5/matches/${request.matchId}`,
+		url: riotApiUrl(region, `lol/match/v5/matches/${request.matchId}`),
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch match data from Riot API",
 	})
@@ -87,7 +91,7 @@ export const getLeagueEntryByPUUID = async (
 	region: Region = DEFAULT_PLATFORM_REGION
 ) => {
 	return await axiosRequest<LeagueEntry[]>({
-		url: `api/riotgames/${region}/lol/league/v4/entries/by-puuid/${request.puuid}`,
+		url: riotApiUrl(region, `lol/league/v4/entries/by-puuid/${request.puuid}`),
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch league entry data from Riot API",
 	})
@@ -103,7 +107,7 @@ export const getChampionMasteryTop = async (
 	}
 
 	return await axiosRequest<ChampionMastery[]>({
-		url: `api/riotgames/${region}/lol/champion-mastery/v4/champion-masteries/by-puuid/${request.puuid}/top`,
+		url: riotApiUrl(region, `lol/champion-mastery/v4/champion-masteries/by-puuid/${request.puuid}/top`),
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch champion mastery data from Riot API",
 		params,
