@@ -20,14 +20,6 @@ export function NavigationMenu() {
 						<Link to={RouterPath.HOME}>Home</Link>
 					</NavigationMenuLink>
 				</NavigationMenuItem>
-				<NavigationMenuItem>
-					<NavigationMenuLink
-						asChild
-						className={navigationMenuTriggerStyle()}
-					>
-						<a href="/asf">Non existing</a>
-					</NavigationMenuLink>
-				</NavigationMenuItem>
 			</NavigationMenuList>
 		</_NavigationMenu>
 	)

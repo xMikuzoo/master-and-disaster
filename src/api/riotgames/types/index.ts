@@ -50,10 +50,6 @@ export interface Match {
 	info: InfoDto
 }
 
-export interface GetMatchRequest {
-	matchId: string
-}
-
 export interface MiniSeries {
 	losses: number
 	progress: string

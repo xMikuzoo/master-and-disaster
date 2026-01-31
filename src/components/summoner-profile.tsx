@@ -1,4 +1,9 @@
-import { getLeagueEntryByPUUID, getSummonerByPUUID } from "@/api/riotgames"
+import { memo, useMemo, useState } from "react"
+import {
+	getLeagueEntryByPUUID,
+	getSummonerByPUUID,
+	riotQueryKeys,
+} from "@/api/riotgames"
 import { useQuery } from "@tanstack/react-query"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import {
@@ -19,16 +24,18 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { XIcon } from "lucide-react"
 import { Matches } from "./matches"
 import { getProfileIcon } from "@/api/ddragon-cdn"
+import { UI_TEXTS } from "@/constants/ui-texts"
 
 type SummonerProfileProps = Account
 
-export function SummonerProfile(props: SummonerProfileProps) {
+export const SummonerProfile = memo(function SummonerProfile(
+	props: SummonerProfileProps
+) {
 	const [selectedQueueType, setSelectedQueueType] = useState<string | null>(
 		null
 	)
@@ -38,7 +45,7 @@ export function SummonerProfile(props: SummonerProfileProps) {
 		error: summonerError,
 		isPending: isPendingSummoner,
 	} = useQuery({
-		queryKey: ["summonerProfile", props.puuid],
+		queryKey: riotQueryKeys.summoner(props.puuid),
 		queryFn: () => getSummonerByPUUID({ puuid: props.puuid }),
 		select: (data) => data?.data,
 	})
@@ -48,7 +55,7 @@ export function SummonerProfile(props: SummonerProfileProps) {
 		error: leagueEntryError,
 		isPending: isPendingLeagueEntry,
 	} = useQuery({
-		queryKey: ["leagueEntry", props.puuid],
+		queryKey: riotQueryKeys.leagueEntry(props.puuid),
 		queryFn: () => getLeagueEntryByPUUID({ puuid: props.puuid }),
 		select: (data) => data?.data,
 		enabled: !!summoner,
@@ -90,7 +97,7 @@ export function SummonerProfile(props: SummonerProfileProps) {
 									{props.gameName}#{props.tagLine}
 								</ItemTitle>
 								<ItemDescription>
-									Poziom: {summoner?.summonerLevel}
+									{UI_TEXTS.level}: {summoner?.summonerLevel}
 								</ItemDescription>
 							</ItemContent>
 							<ItemActions>
@@ -99,7 +106,7 @@ export function SummonerProfile(props: SummonerProfileProps) {
 										<ButtonGroup>
 											<DropdownMenuTrigger asChild>
 												<Button variant={"outline"}>
-													Ranking
+													{UI_TEXTS.ranking}
 												</Button>
 											</DropdownMenuTrigger>
 											{!!filteredLeagueEntry && (
@@ -176,4 +183,4 @@ export function SummonerProfile(props: SummonerProfileProps) {
 			<Matches accountPUUID={props.puuid} />
 		</>
 	)
-}
+})

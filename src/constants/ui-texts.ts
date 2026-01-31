@@ -1,0 +1,15 @@
+export const UI_TEXTS = {
+	recentMatches: "Ostatnie mecze",
+	gamesTogether: "Gry razem",
+	level: "Poziom",
+	ranking: "Ranking",
+	toggleTheme: "Przełącz motyw",
+	themeLight: "Jasny",
+	themeDark: "Ciemny",
+	themeSystem: "Systemowy",
+	loading: "Loading...",
+	loadingMatches: "Loading matches...",
+	failedToLoadMatches: "Failed to load matches",
+	networkError: "Network Error",
+	unableToConnect: "Unable to connect to server",
+} as const

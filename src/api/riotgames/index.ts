@@ -1,5 +1,5 @@
 import type { LeagueEntry, GetLeagueEntryRequest } from "./types/index"
-import { axiosRequest } from "@/hooks/useAxios"
+import { axiosRequest } from "@/hooks/use-axios"
 import type {
 	Account,
 	GetAccountPathParams,
@@ -10,24 +10,38 @@ import type {
 	Match,
 	GetMatchRequest,
 } from "./types"
+import {
+	type Region,
+	DEFAULT_ACCOUNT_REGION,
+	DEFAULT_PLATFORM_REGION,
+} from "./config"
 
-export const getAccountByRiotId = async (pathParams: GetAccountPathParams) => {
+export const getAccountByRiotId = async (
+	pathParams: GetAccountPathParams,
+	region: Region = DEFAULT_ACCOUNT_REGION
+) => {
 	return await axiosRequest<Account>({
-		url: `api/riotgames/europe/riot/account/v1/accounts/by-riot-id/${pathParams.gameName}/${pathParams.tagLine}`,
+		url: `api/riotgames/${region}/riot/account/v1/accounts/by-riot-id/${pathParams.gameName}/${pathParams.tagLine}`,
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch account data from Riot API",
 	})
 }
 
-export const getSummonerByPUUID = async (pathParams: GetSummonerPathParams) => {
+export const getSummonerByPUUID = async (
+	pathParams: GetSummonerPathParams,
+	region: Region = DEFAULT_PLATFORM_REGION
+) => {
 	return await axiosRequest<Summoner>({
-		url: `api/riotgames/eun1/lol/summoner/v4/summoners/by-puuid/${pathParams.puuid}`,
+		url: `api/riotgames/${region}/lol/summoner/v4/summoners/by-puuid/${pathParams.puuid}`,
 		method: "GET",
-		defaultErrorMessage: "Failed to fetch account data from Riot API",
+		defaultErrorMessage: "Failed to fetch summoner data from Riot API",
 	})
 }
 
-export const getMatchListByPUUID = async (request: GetMatchListRequest) => {
+export const getMatchListByPUUID = async (
+	request: GetMatchListRequest,
+	region: Region = DEFAULT_ACCOUNT_REGION
+) => {
 	const params = new URLSearchParams({})
 	if (request.query?.startTime) {
 		params.append("startTime", request.query.startTime.toString())
@@ -45,25 +59,35 @@ export const getMatchListByPUUID = async (request: GetMatchListRequest) => {
 	params.append("count", (request.query?.count ?? 20).toString())
 
 	return await axiosRequest<MatchList>({
-		url: `api/riotgames/europe/lol/match/v5/matches/by-puuid/${request.params.puuid}/ids`,
+		url: `api/riotgames/${region}/lol/match/v5/matches/by-puuid/${request.params.puuid}/ids`,
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch match list from Riot API",
 		params: params,
 	})
 }
 
-export const getMatchById = async (request: GetMatchRequest) => {
+export const getMatchById = async (
+	request: GetMatchRequest,
+	region: Region = DEFAULT_ACCOUNT_REGION
+) => {
 	return await axiosRequest<Match>({
-		url: `api/riotgames/europe/lol/match/v5/matches/${request.matchId}`,
+		url: `api/riotgames/${region}/lol/match/v5/matches/${request.matchId}`,
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch match data from Riot API",
 	})
 }
 
-export const getLeagueEntryByPUUID = async (request: GetLeagueEntryRequest) => {
+export const getLeagueEntryByPUUID = async (
+	request: GetLeagueEntryRequest,
+	region: Region = DEFAULT_PLATFORM_REGION
+) => {
 	return await axiosRequest<LeagueEntry[]>({
-		url: `api/riotgames/eun1/lol/league/v4/entries/by-puuid/${request.puuid}`,
+		url: `api/riotgames/${region}/lol/league/v4/entries/by-puuid/${request.puuid}`,
 		method: "GET",
 		defaultErrorMessage: "Failed to fetch league entry data from Riot API",
 	})
 }
+
+export { riotQueryKeys } from "./query-keys"
+export { REGIONS, DEFAULT_ACCOUNT_REGION, DEFAULT_PLATFORM_REGION } from "./config"
+export type { Region } from "./config"

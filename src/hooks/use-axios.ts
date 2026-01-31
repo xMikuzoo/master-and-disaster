@@ -1,4 +1,4 @@
-import { exceptionHelper } from "@/helpers/exceptionHelper"
+import { exceptionHelper } from "@/utils"
 import axios, { AxiosError } from "axios"
 import { toast } from "sonner"
 
@@ -31,7 +31,7 @@ export async function axiosRequest<TResponse, TData = void>(
 			headers: headers,
 		})
 		if (options.successMessage) {
-			toast.success("sukces", { description: options.successMessage })
+			toast.success("Success", { description: options.successMessage })
 		}
 		return result
 	} catch (err) {

@@ -1,5 +1,5 @@
-import { getChampionIcon } from "@/api/ddragon-cdn"
-import { getMatchById, getMatchListByPUUID } from "@/api/riotgames"
+import { memo } from "react"
+import { getMatchById, getMatchListByPUUID, riotQueryKeys } from "@/api/riotgames"
 import type { Match } from "@/api/riotgames/types"
 import {
 	Table,
@@ -10,19 +10,22 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table"
-import { getQueueNameById } from "@/utils/queueMapping"
+import { TeamDisplay } from "./team-display"
+import { getQueueNameById } from "@/utils/queue-mapping"
 import { useQueries, useQuery } from "@tanstack/react-query"
+import { UI_TEXTS } from "@/constants/ui-texts"
 
 interface MatchesProps {
 	accountPUUID: string
 }
-export function Matches(props: MatchesProps) {
+
+export const Matches = memo(function Matches(props: MatchesProps) {
 	const {
 		data: matchList,
-		error: _,
-		isLoading: __,
+		error,
+		isLoading,
 	} = useQuery({
-		queryKey: ["matchList", props.accountPUUID],
+		queryKey: riotQueryKeys.matchList(props.accountPUUID),
 		queryFn: () =>
 			getMatchListByPUUID({
 				params: { puuid: props.accountPUUID },
@@ -31,58 +34,18 @@ export function Matches(props: MatchesProps) {
 		select: (data) => data?.data,
 		enabled: !!props.accountPUUID,
 	})
+
 	const matchDetailsQueries = useQueries({
 		queries: (matchList ?? []).map((matchId) => ({
-			queryKey: ["matchDetails", matchId],
+			queryKey: riotQueryKeys.matchDetails(matchId),
 			queryFn: () => getMatchById({ matchId }),
 			enabled: !!matchList,
 		})),
 	})
 
-	const matches = () => {
-		return matchDetailsQueries
-			.map((query) => query.data?.data)
-			.filter((match): match is Match => match !== undefined)
-	}
-
-	const champions = (participants: Match["info"]["participants"]) => {
-		const team1 = participants.filter((p) => p.teamId === 100)
-		const team2 = participants.filter((p) => p.teamId === 200)
-
-		const PlayerRow = ({
-			p,
-			team,
-		}: {
-			p: (typeof participants)[0]
-			team: 1 | 2
-		}) => (
-			<div className="flex items-center gap-1">
-				<img
-					src={getChampionIcon(p.championName)}
-					alt={p.championName}
-					className={`h-5 w-5 rounded ${team === 1 ? "border border-blue-500" : "border border-red-500"}`}
-				/>
-				<span className="max-w-20 truncate text-xs">
-					{p.riotIdGameName}
-				</span>
-			</div>
-		)
-
-		return (
-			<div className="flex justify-between">
-				<div className="flex w-full flex-col gap-0.5">
-					{team1.map((p) => (
-						<PlayerRow key={p.participantId} p={p} team={1} />
-					))}
-				</div>
-				<div className="flex w-full flex-col gap-0.5">
-					{team2.map((p) => (
-						<PlayerRow key={p.participantId} p={p} team={2} />
-					))}
-				</div>
-			</div>
-		)
-	}
+	const matches = matchDetailsQueries
+		.map((query) => query.data?.data)
+		.filter((match): match is Match => match !== undefined)
 
 	const matchRow = (match: Match) => {
 		return (
@@ -103,15 +66,33 @@ export function Matches(props: MatchesProps) {
 				<TableCell>
 					{(match.info.gameDuration / 60).toFixed(2)} mins
 				</TableCell>
-				<TableCell>{champions(match.info.participants)}</TableCell>
+				<TableCell>
+					<TeamDisplay participants={match.info.participants} />
+				</TableCell>
 			</TableRow>
+		)
+	}
+
+	if (isLoading) {
+		return (
+			<div className="rounded-md border p-2">
+				{UI_TEXTS.loadingMatches}
+			</div>
+		)
+	}
+
+	if (error) {
+		return (
+			<div className="rounded-md border p-2 text-red-500">
+				{UI_TEXTS.failedToLoadMatches}
+			</div>
 		)
 	}
 
 	return (
 		<div className="rounded-md border p-2">
 			<Table>
-				<TableCaption>Ostatnie mecze</TableCaption>
+				<TableCaption>{UI_TEXTS.recentMatches}</TableCaption>
 				<TableHeader>
 					<TableRow>
 						<TableHead></TableHead>
@@ -123,8 +104,8 @@ export function Matches(props: MatchesProps) {
 						<TableHead></TableHead>
 					</TableRow>
 				</TableHeader>
-				<TableBody>{matches().map(matchRow)}</TableBody>
+				<TableBody>{matches.map(matchRow)}</TableBody>
 			</Table>
 		</div>
 	)
-}
+})
