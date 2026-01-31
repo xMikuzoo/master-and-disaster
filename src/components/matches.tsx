@@ -19,8 +19,8 @@ interface MatchesProps {
 export function Matches(props: MatchesProps) {
 	const {
 		data: matchList,
-		error: matchListError,
-		isLoading: matchListIsLoading,
+		error: _,
+		isLoading: __,
 	} = useQuery({
 		queryKey: ["matchList", props.accountPUUID],
 		queryFn: () =>
@@ -70,12 +70,12 @@ export function Matches(props: MatchesProps) {
 
 		return (
 			<div className="flex justify-between">
-				<div className="flex w-full flex-col gap-1">
+				<div className="flex w-full flex-col gap-0.5">
 					{team1.map((p) => (
 						<PlayerRow key={p.participantId} p={p} team={1} />
 					))}
 				</div>
-				<div className="flex w-full flex-col gap-1">
+				<div className="flex w-full flex-col gap-0.5">
 					{team2.map((p) => (
 						<PlayerRow key={p.participantId} p={p} team={2} />
 					))}
