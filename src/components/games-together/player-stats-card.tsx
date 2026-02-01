@@ -7,6 +7,8 @@ import { getChampionIcon, getProfileIcon } from "@/api/ddragon-cdn"
 import type { Match } from "@/api/riotgames/types"
 import type { Account } from "@/api/riotgames/types"
 import type { PlayerConfig } from "@/config/players"
+import type { ChampionStat, ChampionAggregation } from "@/types/champion-stats"
+import { toChampionStat } from "@/types/champion-stats"
 import { UI_TEXTS } from "@/constants/ui-texts"
 import { useSummoner } from "@/api/riotgames/hooks"
 import { AccountSelector } from "./account-selector"
@@ -20,18 +22,6 @@ interface PlayerStatsCardProps {
 	isLoadingAccount?: boolean
 }
 
-interface ChampionStat {
-	championId: number
-	championName: string
-	gamesPlayed: number
-	wins: number
-	kills: number
-	deaths: number
-	assists: number
-	winrate: number
-	kda: number
-}
-
 export const PlayerStatsCard = memo(function PlayerStatsCard({
 	playerConfig,
 	selectedAccountIndex,
@@ -43,10 +33,10 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 	const puuid = accountData?.puuid
 	const { data: summoner } = useSummoner(puuid)
 
-	const championStats = useMemo(() => {
+	const championStats = useMemo((): ChampionStat[] => {
 		if (!puuid) return []
 
-		const statsMap = new Map<number, ChampionStat>()
+		const statsMap = new Map<number, ChampionAggregation>()
 
 		for (const match of matches) {
 			const participant = match.info.participants.find(
@@ -70,20 +60,14 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 					kills: participant.kills,
 					deaths: participant.deaths,
 					assists: participant.assists,
-					winrate: 0,
-					kda: 0,
 				})
 			}
 		}
 
-		const stats = Array.from(statsMap.values())
-		for (const stat of stats) {
-			stat.winrate = (stat.wins / stat.gamesPlayed) * 100
-			stat.kda =
-				(stat.kills + stat.assists) / Math.max(stat.deaths, 1)
-		}
-
-		return stats.sort((a, b) => b.winrate - a.winrate).slice(0, 3)
+		return Array.from(statsMap.values())
+			.map(toChampionStat)
+			.sort((a, b) => b.winRate - a.winRate)
+			.slice(0, 3)
 	}, [matches, puuid])
 
 	if (isLoadingAccount) {
@@ -155,15 +139,15 @@ export const PlayerStatsCard = memo(function PlayerStatsCard({
 								</div>
 								<div className="text-muted-foreground text-xs">
 									{stat.gamesPlayed} {UI_TEXTS.games} •{" "}
-									{stat.kda.toFixed(1)} KDA
+									{stat.avgKda.toFixed(1)} KDA
 								</div>
 							</div>
 							<Badge
 								variant={
-									stat.winrate >= 50 ? "default" : "secondary"
+									stat.winRate >= 50 ? "default" : "secondary"
 								}
 							>
-								{stat.winrate.toFixed(0)}% WR
+								{stat.winRate.toFixed(0)}% WR
 							</Badge>
 						</div>
 					))}

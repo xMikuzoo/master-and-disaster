@@ -14,7 +14,7 @@ export const ChampionStats = memo(function ChampionStats({
 	if (champions.length === 0) {
 		return (
 			<div className="text-muted-foreground text-center text-xs">
-				Brak danych o championach
+				{UI_TEXTS.noCommonGames}
 			</div>
 		)
 	}
@@ -40,7 +40,7 @@ export const ChampionStats = memo(function ChampionStats({
 						</div>
 						<div className="text-muted-foreground text-xs">
 							{champion.gamesPlayed} {UI_TEXTS.games} •{" "}
-							{champion.avgKDA.toFixed(1)} KDA
+							{champion.avgKda.toFixed(1)} KDA
 						</div>
 					</div>
 					<Badge

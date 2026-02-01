@@ -4,6 +4,22 @@ import { STORAGE_KEYS } from "@/constants"
 
 type Theme = "dark" | "light" | "system"
 
+const VALID_THEMES: readonly Theme[] = ["dark", "light", "system"] as const
+
+function isValidTheme(value: unknown): value is Theme {
+	return typeof value === "string" && VALID_THEMES.includes(value as Theme)
+}
+
+function loadThemeFromStorage(storageKey: string, defaultTheme: Theme): Theme {
+	try {
+		const stored = localStorage.getItem(storageKey)
+		return isValidTheme(stored) ? stored : defaultTheme
+	} catch {
+		// localStorage may throw in private browsing mode
+		return defaultTheme
+	}
+}
+
 type ThemeProviderProps = {
 	children: React.ReactNode
 	defaultTheme?: Theme
@@ -16,8 +32,8 @@ export function ThemeProvider({
 	storageKey = STORAGE_KEYS.THEME,
 	...props
 }: ThemeProviderProps) {
-	const [theme, setTheme] = useState<Theme>(
-		() => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+	const [theme, setTheme] = useState<Theme>(() =>
+		loadThemeFromStorage(storageKey, defaultTheme)
 	)
 
 	useEffect(() => {
@@ -40,9 +56,14 @@ export function ThemeProvider({
 
 	const value = {
 		theme,
-		setTheme: (theme: Theme) => {
-			localStorage.setItem(storageKey, theme)
-			setTheme(theme)
+		setTheme: (newTheme: Theme) => {
+			if (!isValidTheme(newTheme)) return
+			try {
+				localStorage.setItem(storageKey, newTheme)
+			} catch {
+				// localStorage may throw in private browsing mode
+			}
+			setTheme(newTheme)
 		},
 	}
 

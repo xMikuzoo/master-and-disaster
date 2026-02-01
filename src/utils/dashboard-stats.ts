@@ -1,17 +1,10 @@
 import type { Match } from "@/api/riotgames/types"
 import type { ParticipantDto } from "@/api/riotgames/types/match.types"
+import type { ChampionStat, ChampionAggregation } from "@/types/champion-stats"
+import { toChampionStat } from "@/types/champion-stats"
+import { SCORING_WEIGHTS, SCORING_THRESHOLDS } from "@/constants/scoring"
 
-export interface ChampionStat {
-	championId: number
-	championName: string
-	gamesPlayed: number
-	wins: number
-	winRate: number
-	avgKDA: number
-	kills: number
-	deaths: number
-	assists: number
-}
+export type { ChampionStat }
 
 export interface AggregatedPlayerStats {
 	// Basic
@@ -75,18 +68,7 @@ export function calculateAggregatedStats(
 	}
 
 	const participants: ParticipantDto[] = []
-	const championMap = new Map<
-		number,
-		{
-			championId: number
-			championName: string
-			gamesPlayed: number
-			wins: number
-			kills: number
-			deaths: number
-			assists: number
-		}
-	>()
+	const championMap = new Map<number, ChampionAggregation>()
 
 	let totalKills = 0
 	let totalDeaths = 0
@@ -157,19 +139,9 @@ export function calculateAggregatedStats(
 	const avgVisionScore = totalVision / gamesPlayed
 	const avgVisionPerMin = totalVision / totalGameDuration
 
-	// Build champion stats
+	// Build champion stats using shared helper
 	const championStats: ChampionStat[] = Array.from(championMap.values()).map(
-		(c) => ({
-			championId: c.championId,
-			championName: c.championName,
-			gamesPlayed: c.gamesPlayed,
-			wins: c.wins,
-			winRate: (c.wins / c.gamesPlayed) * 100,
-			avgKDA: (c.kills + c.assists) / Math.max(c.deaths, 1),
-			kills: c.kills,
-			deaths: c.deaths,
-			assists: c.assists,
-		})
+		toChampionStat
 	)
 
 	// Sort by games played, then winrate
@@ -185,11 +157,11 @@ export function calculateAggregatedStats(
 
 	// Calculate overall performance score (0-100)
 	// Weighted formula based on typical ranked performance metrics
-	const winRateScore = (wins / gamesPlayed) * 40 // 40% weight
-	const kdaScore = Math.min(avgKDA / 5, 1) * 25 // 25% weight, max at 5 KDA
-	const csScore = Math.min(avgCSPerMin / 8, 1) * 15 // 15% weight, max at 8 CS/min
-	const damageScore = Math.min(avgDamagePerMin / 1000, 1) * 10 // 10% weight
-	const visionScore = Math.min(avgVisionPerMin / 1.5, 1) * 10 // 10% weight
+	const winRateScore = (wins / gamesPlayed) * SCORING_WEIGHTS.WIN_RATE
+	const kdaScore = Math.min(avgKDA / SCORING_THRESHOLDS.MAX_KDA, 1) * SCORING_WEIGHTS.KDA
+	const csScore = Math.min(avgCSPerMin / SCORING_THRESHOLDS.MAX_CS_PER_MIN, 1) * SCORING_WEIGHTS.CS
+	const damageScore = Math.min(avgDamagePerMin / SCORING_THRESHOLDS.MAX_DAMAGE_PER_MIN, 1) * SCORING_WEIGHTS.DAMAGE
+	const visionScore = Math.min(avgVisionPerMin / SCORING_THRESHOLDS.MAX_VISION_PER_MIN, 1) * SCORING_WEIGHTS.VISION
 
 	const overallPerformanceScore = Math.round(
 		(winRateScore + kdaScore + csScore + damageScore + visionScore) * 100

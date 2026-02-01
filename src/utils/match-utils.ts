@@ -1,34 +1,60 @@
 import type { ParticipantDto } from "@/api/riotgames/types/match.types"
 
+// Performance score calculation weights
+const PERFORMANCE_WEIGHTS = {
+	KDA: 0.3,
+	KILL_PARTICIPATION: 0.25,
+	TEAM_DAMAGE: 0.25,
+	GOLD_PER_MIN: 0.1,
+	VISION_PER_MIN: 0.1,
+} as const
+
+// Normalization factors for performance metrics
+const NORMALIZATION = {
+	GOLD_PER_MIN_FACTOR: 500,
+	VISION_PER_MIN_FACTOR: 2,
+	PERCENTAGE_MULTIPLIER: 100,
+} as const
+
+/**
+ * Safely extracts a numeric value from challenges object
+ */
+function getChallengeValue(
+	challenges: Record<string, unknown> | undefined,
+	key: string,
+	fallback: number
+): number {
+	if (!challenges) return fallback
+	const value = challenges[key]
+	return typeof value === "number" && !Number.isNaN(value) ? value : fallback
+}
+
 /**
  * Calculates performance score based on Riot's MVP system metrics
+ * Score weights:
+ * - KDA: 30%
+ * - Kill Participation: 25%
+ * - Team Damage %: 25%
+ * - Gold per minute: 10%
+ * - Vision score per minute: 10%
  */
 function getPerformanceScore(p: ParticipantDto): number {
-	const c = p.challenges || {}
+	const challenges = p.challenges as Record<string, unknown> | undefined
 
-	// KDA (30%)
-	const kda =
-		(c.kda as number) ?? (p.kills + p.assists) / Math.max(p.deaths, 1)
+	const fallbackKda = (p.kills + p.assists) / Math.max(p.deaths, 1)
 
-	// Kill Participation (25%)
-	const killParticipation = (c.killParticipation as number) ?? 0
+	const kda = getChallengeValue(challenges, "kda", fallbackKda)
+	const killParticipation = getChallengeValue(challenges, "killParticipation", 0)
+	const teamDamagePercent = getChallengeValue(challenges, "teamDamagePercentage", 0)
+	const goldPerMin = getChallengeValue(challenges, "goldPerMinute", 0)
+	const visionPerMin = getChallengeValue(challenges, "visionScorePerMinute", 0)
 
-	// Team Damage % (25%)
-	const teamDamagePercent = (c.teamDamagePercentage as number) ?? 0
-
-	// Gold per minute (10%)
-	const goldPerMin = (c.goldPerMinute as number) ?? 0
-
-	// Vision score per minute (10%)
-	const visionPerMin = (c.visionScorePerMinute as number) ?? 0
-
-	// Normalize and weight
 	return (
-		kda * 0.3 +
-		killParticipation * 100 * 0.25 +
-		teamDamagePercent * 100 * 0.25 +
-		(goldPerMin / 500) * 0.1 +
-		(visionPerMin / 2) * 0.1
+		kda * PERFORMANCE_WEIGHTS.KDA +
+		killParticipation * NORMALIZATION.PERCENTAGE_MULTIPLIER * PERFORMANCE_WEIGHTS.KILL_PARTICIPATION +
+		teamDamagePercent * NORMALIZATION.PERCENTAGE_MULTIPLIER * PERFORMANCE_WEIGHTS.TEAM_DAMAGE +
+		(goldPerMin / NORMALIZATION.GOLD_PER_MIN_FACTOR) * PERFORMANCE_WEIGHTS.GOLD_PER_MIN +
+		(visionPerMin / NORMALIZATION.VISION_PER_MIN_FACTOR) * PERFORMANCE_WEIGHTS.VISION_PER_MIN
 	)
 }
 

@@ -6,9 +6,7 @@ import {
 	riotQueryKeys,
 } from "@/api/riotgames"
 import type { Match } from "@/api/riotgames/types"
-
-const BATCH_SIZE = 20
-const TARGET_COUNT = 10
+import { MATCH_FETCH } from "@/constants/api"
 
 interface UseCommonMatchesParams {
 	puuid1: string | undefined
@@ -56,8 +54,8 @@ export function useCommonMatches({
 
 			const currentMatches = commonMatchesRef.current
 			const targetTotal = isInitial
-				? TARGET_COUNT
-				: currentMatches.length + TARGET_COUNT
+				? MATCH_FETCH.TARGET_COUNT
+				: currentMatches.length + MATCH_FETCH.TARGET_COUNT
 			let foundCommon: Match[] = isInitial ? [] : [...currentMatches]
 			let currentStart = startIndexRef.current
 
@@ -68,7 +66,7 @@ export function useCommonMatches({
 						params: { puuid: puuid1 },
 						query: {
 							start: currentStart,
-							count: BATCH_SIZE,
+							count: MATCH_FETCH.BATCH_SIZE,
 							type: "ranked",
 						},
 					})
@@ -88,52 +86,58 @@ export function useCommonMatches({
 
 						fetchedMatchIdsRef.current.add(matchId)
 
-						// Try to get from cache first
-						const cachedMatch = queryClient.getQueryData<{ data: Match }>(
-							riotQueryKeys.matchDetails(matchId)
-						)
+						try {
+							// Try to get from cache first
+							const cachedMatch = queryClient.getQueryData<{ data: Match }>(
+								riotQueryKeys.matchDetails(matchId)
+							)
 
-						let match: Match | undefined
+							let match: Match | undefined
 
-						if (cachedMatch) {
-							match = cachedMatch.data
-						} else {
-							const matchResponse = await getMatchById({ matchId })
-							match = matchResponse?.data
+							if (cachedMatch) {
+								match = cachedMatch.data
+							} else {
+								const matchResponse = await getMatchById({ matchId })
+								match = matchResponse?.data
 
-							// Cache the match for later use
-							if (matchResponse) {
-								queryClient.setQueryData(
-									riotQueryKeys.matchDetails(matchId),
-									matchResponse
-								)
+								// Cache the match for later use
+								if (matchResponse) {
+									queryClient.setQueryData(
+										riotQueryKeys.matchDetails(matchId),
+										matchResponse
+									)
+								}
 							}
-						}
 
-						if (!match) continue
+							if (!match) continue
 
-						// Check if both players participated
-						const participants = match.metadata.participants
-						if (
-							participants.includes(puuid1) &&
-							participants.includes(puuid2)
-						) {
-							foundCommon.push(match)
-							commonMatchesRef.current = [...foundCommon]
+							// Check if both players participated
+							const participants = match.metadata.participants
+							if (
+								participants.includes(puuid1) &&
+								participants.includes(puuid2)
+							) {
+								foundCommon.push(match)
+								commonMatchesRef.current = [...foundCommon]
 
-							// Update state incrementally for better UX
-							setCommonMatches([...foundCommon])
+								// Update state incrementally for better UX
+								setCommonMatches([...foundCommon])
 
-							if (foundCommon.length >= targetTotal) {
-								break
+								if (foundCommon.length >= targetTotal) {
+									break
+								}
 							}
+						} catch (error) {
+							// Log error but continue fetching other matches
+							console.error(`Failed to fetch match ${matchId}:`, error)
+							continue
 						}
 					}
 
-					currentStart += BATCH_SIZE
+					currentStart += MATCH_FETCH.BATCH_SIZE
 
 					// If we didn't get a full batch, there are no more matches
-					if (matchIds.length < BATCH_SIZE) {
+					if (matchIds.length < MATCH_FETCH.BATCH_SIZE) {
 						setHasMore(false)
 						break
 					}

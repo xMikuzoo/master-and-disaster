@@ -6,8 +6,7 @@ import {
 	riotQueryKeys,
 } from "@/api/riotgames"
 import type { Match } from "@/api/riotgames/types"
-
-const TARGET_COUNT = 10
+import { MATCH_FETCH } from "@/constants/api"
 
 interface UsePlayerMatchesParams {
 	puuid: string | undefined
@@ -39,7 +38,7 @@ export function usePlayerMatches({
 					params: { puuid: targetPuuid },
 					query: {
 						start: 0,
-						count: TARGET_COUNT,
+						count: MATCH_FETCH.TARGET_COUNT,
 						type: "ranked",
 					},
 				})

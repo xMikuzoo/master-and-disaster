@@ -2,7 +2,7 @@ export const getProfileIcon = (iconId: number) => {
 	return `ddragon-cdn/img/profileicon/${iconId}.png`
 }
 
-// Mapowanie ID summoner spelli na nazwy plików
+// Summoner spell ID to file name mapping
 const SUMMONER_SPELL_MAP: Record<number, string> = {
 	1: "SummonerBoost", // Cleanse
 	3: "SummonerExhaust", // Exhaust
@@ -49,9 +49,34 @@ export interface ChampionData {
 	data: Record<string, ChampionInfo>
 }
 
+export class ChampionDataFetchError extends Error {
+	constructor(
+		message: string,
+		public readonly status?: number
+	) {
+		super(message)
+		this.name = "ChampionDataFetchError"
+	}
+}
+
 export const getChampionData = async (): Promise<ChampionData> => {
 	const response = await fetch("ddragon-cdn/data/en_US/champion.json")
-	return response.json()
+
+	if (!response.ok) {
+		throw new ChampionDataFetchError(
+			`Failed to fetch champion data: ${response.statusText}`,
+			response.status
+		)
+	}
+
+	const data = await response.json()
+
+	// Validate response structure
+	if (!data || typeof data !== "object" || !data.data) {
+		throw new ChampionDataFetchError("Invalid champion data structure")
+	}
+
+	return data as ChampionData
 }
 
 export const getChampionNameById = (
